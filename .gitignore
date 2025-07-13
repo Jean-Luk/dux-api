@@ -1,0 +1,19 @@
+# Node.js
+node_modules/
+.env
+
+# TypeScript
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# VSCode
+.vscode/
+
+# ts-node-dev
+tmp/
+
+
+/src/generated/prisma

@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id         String   @id @default(uuid()) @map("pk_authtoken")
+  loginId    Int      @map("fk_login")
+  authToken  String   @unique @map("auth_token") @db.VarChar
+  ephemeral  Boolean? @default(true) @map("ephemeral")
+  lastAccess DateTime @map("last_access") @db.Timestamp(6)
+  login      Login    @relation(fields: [loginId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "authtoken_login")
+
+  @@map("session")
+}
+
+model Driver {
+  id              Int      @id @default(autoincrement()) @map("pk_driver")
+  userId          String   @map("fk_user")
+  lineId          String   @map("fk_line")
+  status          String   @map("status") @db.Char(1)
+  sharingLocation Boolean? @default(false) @map("sharing_location")
+  latitude        Int?     @map("latitude")
+  longitude       Int?     @map("longitude")
+  line            Line     @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "driver_line")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "driver_user")
+
+  @@map("driver")
+}
+
+model Invite {
+  id           String   @id @default(uuid()) @map("pk_invite")
+  invitorId    String   @map("fk_invitor")
+  invitedId    String?  @map("fk_invited")
+  lineId       String   @map("fk_line")
+  invitedEmail String   @map("invited_email") @db.VarChar
+  role         String   @map("role") @db.Char(1)
+  createdAt    DateTime @map("created_at") @db.Timestamp(6)
+  userInvited  User?    @relation("user_invited", fields: [invitedId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invite_user")
+  line         Line     @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invite_line")
+  invitorUser  User     @relation("invitor_user", fields: [invitorId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invitor_user")
+
+  @@map("invite")
+}
+
+model Line {
+  id                String             @id @default(uuid()) @map("pk_line")
+  name              String             @map("name") @db.VarChar
+  departureTime     DateTime?          @map("departure_time") @db.Timestamp(6)
+  active            Boolean?           @default(true) @map("active")
+  billDueDate       DateTime?          @map("bill_due_date") @db.Date
+  drivers           Driver[]
+  invites           Invite[]
+  lineWeekdays      LineWeekday[]
+  passengers        Passenger[]
+  passengerCheckins PassengerCheckin[]
+  points            Point[]
+
+  @@map("line")
+}
+
+model LineWeekday {
+  lineId  String @map("fk_line")
+  weekday String @map("weekday") @db.Char(1)
+  line    Line   @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "line_weekday")
+
+  @@id([lineId, weekday])
+  @@map("line_weekday")
+}
+
+model Login {
+  id       Int       @id @default(autoincrement()) @map("pk_login")
+  userId   String    @unique @map("fk_user")
+  password String    @map("password") @db.VarChar
+  salt     String    @map("salt") @db.VarChar
+  sessions Session[]
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "user_login")
+
+  @@map("login")
+}
+
+model Manager {
+  id          Int                 @id @default(autoincrement()) @map("pk_manager")
+  userId      String              @unique @map("fk_user")
+  status      String              @map("status") @db.Char(1)
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "manager_user")
+  permissions ManagerPermission[]
+
+  @@map("manager")
+}
+
+model ManagerPermission {
+  permissionId Int        @map("fk_permission")
+  managerId    Int        @map("fk_manager")
+  active       Boolean?   @default(false) @map("active")
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "permission")
+  manager      Manager    @relation(fields: [managerId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "manager_permission")
+
+  @@id([permissionId, managerId])
+  @@map("manager_permission")
+}
+
+model Passenger {
+  id              Int                 @id @default(autoincrement()) @map("pk_passenger")
+  userId          String              @map("fk_user")
+  lineId          String              @map("fk_line")
+  status          String              @map("status") @db.Char(1)
+  boardingPointId Int?                @map("fk_boarding_point")
+  destinyPointId  Int?                @map("fk_destiny_point")
+  dropoffPointId  Int?                @map("fk_dropoff_point")
+  card_status     String?             @map("card_status") @db.Char(1)
+  boardingPoint   Point?              @relation("passenger_boarding", fields: [boardingPointId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "passenger_boarding")
+  destinyPoint    Point?              @relation("passenger_destiny", fields: [destinyPointId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "passenger_destiny")
+  dropoffPoint    Point?              @relation("passenger_dropoff", fields: [dropoffPointId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "passenger_dropoff")
+  line            Line                @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_line")
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_user")
+  checkins        PassengerCheckin[]
+  documents       PassengerDocument[]
+
+  @@map("passenger")
+}
+
+model PassengerCheckin {
+  id          Int       @id @default(autoincrement()) @map("pk_checkin")
+  lineId      String    @map("fk_line")
+  passengerId Int       @map("fk_passenger")
+  checkinDate DateTime  @map("checkin_date") @db.Date
+  checked     Boolean?  @default(true) @map("checked")
+  passenger   Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_checkin")
+  line        Line      @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_checkin_line")
+
+  @@map("passenger_checkin")
+}
+
+model PassengerDocument {
+  id          Int       @id @default(autoincrement()) @map("pk_document")
+  passengerId Int       @map("fk_passenger")
+  document    Bytes     @map("document")
+  passenger   Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_document")
+
+  @@map("passenger_document")
+}
+
+model Permission {
+  id                  Int                 @id @default(autoincrement()) @map("pk_permission")
+  description         String?             @map("description") @db.VarChar
+  defaultValue        Boolean?            @default(false) @map("default_value")
+  managersPermissions ManagerPermission[]
+
+  @@map("permission")
+}
+
+model Point {
+  id                 Int         @id @default(autoincrement()) @map("pk_point")
+  lineId             String      @map("fk_line")
+  address            String      @map("address") @db.VarChar
+  sequencePosition   Int         @map("sequence_position")
+  latitude           Int         @map("latitude")
+  longitude          Int         @map("longitude")
+  flavor             String?     @map("flavor") @db.Char(1)
+  boardingPassengers Passenger[] @relation("passenger_boarding")
+  destinyPassengers  Passenger[] @relation("passenger_destiny")
+  dropoffPassengers  Passenger[] @relation("passenger_dropoff")
+  line               Line        @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "line_point")
+
+  @@map("point")
+}
+
+model User {
+  id              String      @id @default(uuid()) @map("pk_user")
+  email           String      @unique @map("email") @db.VarChar
+  cpf             String      @unique @map("cpf") @db.VarChar
+  name            String      @map("name") @db.VarChar
+  lastName        String      @map("last_name") @db.VarChar
+  phone           String?     @map("phone") @db.Char(11)
+  driver          Driver[]
+  invitesReceived Invite[]    @relation("user_invited")
+  invitesSent     Invite[]    @relation("invitor_user")
+  login           Login?
+  manager         Manager?
+  passenger       Passenger[]
+
+  @@map("user")
+}
