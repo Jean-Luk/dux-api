@@ -14,6 +14,3 @@ dist/
 
 # ts-node-dev
 tmp/
-
-
-/src/generated/prisma

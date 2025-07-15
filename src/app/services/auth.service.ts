@@ -3,6 +3,9 @@ import prisma from '../../config/prisma';
 import { AppError } from '../utils/AppError';
 import { Helper } from '../utils/Helper';
 import { SecurityHelper } from '../utils/SecurityHelper';
+import { differenceInMinutes } from 'date-fns';
+
+const SESSION_EXPIRATION_MINUTES : number = Number(process.env.SESSION_EXPIRATION_MINUTES) || 60;
 
 interface RegisterInterface {
     email: string,
@@ -87,59 +90,62 @@ export class AuthService {
             return newUser;
 
         } catch (error: any) {
-            throw new AppError(error.message || 'Erro ao registrar usuário', error.statusCode || 500);
+            throw new AppError(error.message || 'Erro interno ao registrar usuário', error.statusCode || 500);
         }
 
     }
     
     static async login ({login, password, ephemeral} : LoginInterface): Promise<LoginResultInterface> {
-
-        // Valida campos obrigatórios:
-        if (!login || !password) {
-            throw new AppError('Todos os campos são obrigatórios', 400);
-        }
-
-        // Caso seja CPF, remove os caracteres especiais
-        if(Helper.isValidCPF(login)) {
-            login = Helper.sanitizeCPF(login);
-        }
-
-        // Login pode ser e-mail ou CPF
-        // Busca o usuário por qualquer um dos parâmetros:
-        const user = await prisma.user.findFirst({
-            where: {
-                OR: [
-                    {email:login},
-                    {cpf:login},
-                ]
-            },
-            include: {
-                login:true
+        try {
+            // Valida campos obrigatórios:
+            if (!login || !password) {
+                throw new AppError('Todos os campos são obrigatórios', 400);
             }
-        });
-
-        // Se user ou login é null, lança erro padrão
-        if(!user || !user.login) {
-            throw new AppError('Usuário ou senha inválidos', 400);
-        }
-        // Se senha está incorreta, lança erro padrão
-        if(!(await SecurityHelper.checkPassword(password, user.login.password))) {
-            throw new AppError('Usuário ou senha inválidos', 400);
-        }
-        // Após todas as verificações, gera o authtoken
-        const authToken = SecurityHelper.generateAuthToken(user.id);
-        
-        // Cria a session no banco de dados
-        await prisma.session.create({
-            data: {
-                authToken,
-                ephemeral:ephemeral ?? true,
-                lastAccess: new Date(),
-                loginId:user.login.id
-            }
-        })
-
-        return {authToken, user}
-    }
     
+            // Caso seja CPF, remove os caracteres especiais
+            if(Helper.isValidCPF(login)) {
+                login = Helper.sanitizeCPF(login);
+            }
+    
+            // Login pode ser e-mail ou CPF
+            // Busca o usuário por qualquer um dos parâmetros:
+            const user = await prisma.user.findFirst({
+                where: {
+                    OR: [
+                        {email:login},
+                        {cpf:login},
+                    ]
+                },
+                include: {
+                    login:true
+                }
+            });
+    
+            // Se user ou login é null, lança erro padrão
+            if(!user || !user.login) {
+                throw new AppError('Usuário ou senha inválidos', 400);
+            }
+            // Se senha está incorreta, lança erro padrão
+            if(!(await SecurityHelper.checkPassword(password, user.login.password))) {
+                throw new AppError('Usuário ou senha inválidos', 400);
+            }
+            // Após todas as verificações, gera o authtoken
+            const authToken = SecurityHelper.generateAuthToken(user.id);
+            
+            // Cria a session no banco de dados
+            await prisma.session.create({
+                data: {
+                    authToken,
+                    ephemeral:ephemeral ?? true,
+                    lastAccess: new Date(),
+                    loginId:user.login.id
+                }
+            })
+    
+            return {authToken, user}
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao realizar login', error.statusCode || 500);
+        }
+    }
 }

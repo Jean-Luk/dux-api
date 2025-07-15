@@ -37,4 +37,16 @@ export class AuthController {
             next(err);
         }
     }
+
+    static async me(req: Request, res: Response, next: NextFunction) {
+        try {
+            const result = req.user ?? {};
+
+            res.status(200).json(result);
+
+        } catch (err) {
+            next(err);
+        }
+    }
+
 }
