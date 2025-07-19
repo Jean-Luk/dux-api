@@ -5,13 +5,13 @@ import { AppError } from '../utils/AppError';
 
 const SESSION_EXPIRATION_MINUTES = Number(process.env.SESSION_EXPIRATION_MINUTES) || 60;
 
-export async function verifyAuth (req: Request, res: Response, next: NextFunction) {    
+export async function requireAuth (req: Request, res: Response, next: NextFunction) {    
     try {
         const authToken = req.cookies['dux_auth_token'];
 
         // Se authToken não existe ou é vazio então retorna um objeto vazio
         if (!authToken || authToken === "") {
-            return res.status(401).json({ error: 'Não autorizado' });
+            return res.status(401).json({ error: 'Não autenticado' });
         }
 
         // Procura se existe sessão com o token correspondente
@@ -28,7 +28,7 @@ export async function verifyAuth (req: Request, res: Response, next: NextFunctio
 
         // Caso não exista sessão ou não exista usuário, retorna status 401
         if (!session || !session.login?.user) {
-            return res.status(401).json({ error: 'Não autorizado' });
+            return res.status(401).json({ error: 'Não autenticado' });
         }
 
         // Verifica se a sessão já expirou
@@ -36,7 +36,7 @@ export async function verifyAuth (req: Request, res: Response, next: NextFunctio
         // Caso já tenha expirado, deleta a sessão e retorna status 401
         if (minutesSinceLastAccess > SESSION_EXPIRATION_MINUTES) {
             await prisma.session.delete({ where: { authToken } });
-            return res.status(401).json({ error: 'Não autorizado' });
+            return res.status(401).json({ error: 'Não autenticado' });
         }
 
         // Atualiza o lastAccess da sessão
@@ -49,6 +49,6 @@ export async function verifyAuth (req: Request, res: Response, next: NextFunctio
 
         next();
     } catch (error : any) {
-        throw new AppError(error.message || 'Erro interno ao realizar login', error.statusCode || 500);
+        throw new AppError(error.message || 'Erro interno ao verificar login', error.statusCode || 500);
     }
 }

@@ -4,7 +4,15 @@ import logger from '../../config/logger';
 
 
 export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
-   
+
+    if (err instanceof SyntaxError && 'body' in err) {
+		// erro de JSON malformado
+		return res.status(400).json({
+			error: 'JSON inválido no corpo da requisição',
+			details: err.message
+		});
+	}
+    
     if (err instanceof AppError) {
         if (err.statusCode >= 500) {
             logger.error(err);

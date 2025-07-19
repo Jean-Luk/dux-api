@@ -3,9 +3,7 @@ import prisma from '../../config/prisma';
 import { AppError } from '../utils/AppError';
 import { Helper } from '../utils/Helper';
 import { SecurityHelper } from '../utils/SecurityHelper';
-import { differenceInMinutes } from 'date-fns';
-
-const SESSION_EXPIRATION_MINUTES : number = Number(process.env.SESSION_EXPIRATION_MINUTES) || 60;
+import { InviteService } from './invite.service';
 
 interface RegisterInterface {
     email: string,
@@ -73,23 +71,31 @@ export class AuthService {
             const salt = await SecurityHelper.generateSalt();
             const hashPassword = await SecurityHelper.generateHashPassword(password, salt);
 
-            // Cria o user e login
-            const newUser = await prisma.user.create({
-                data: {
-                    email,
-                    cpf:sanitizedCPF,
-                    name,
-                    lastName,
-                    phone:sanitizedPhone,
-                    login: {
-                        create:
-                            {
-                                password:hashPassword,
-                                salt
-                            }                        
+            // Inicia a transaction para criar o usuário, login e vincular os convites pendentes
+            const newUser = await prisma.$transaction(async (tx) => {
+                // Cria o user e login
+                const newUser = await tx.user.create({
+                    data: {
+                        email,
+                        cpf:sanitizedCPF,
+                        name,
+                        lastName,
+                        phone:sanitizedPhone,
+                        login: {
+                            create:
+                                {
+                                    password:hashPassword,
+                                    salt
+                                }
+                        }
                     }
-                }
+                })
+                // Vincula os convites pendentes, passando o client do prisma
+                await InviteService.linkPendingInvites({user:newUser}, tx);
+
+                return newUser;
             })
+
 
             return newUser;
 

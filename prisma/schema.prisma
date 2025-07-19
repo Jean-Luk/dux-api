@@ -34,16 +34,17 @@ model Driver {
 }
 
 model Invite {
-  id           String   @id @default(uuid()) @map("pk_invite")
-  invitorId    String   @map("fk_invitor")
-  invitedId    String?  @map("fk_invited")
-  lineId       String   @map("fk_line")
-  invitedEmail String   @map("invited_email") @db.VarChar
-  role         String   @map("role") @db.Char(1)
-  createdAt    DateTime @map("created_at") @db.Timestamp(6)
-  userInvited  User?    @relation("user_invited", fields: [invitedId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invite_user")
-  line         Line     @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invite_line")
-  invitorUser  User     @relation("invitor_user", fields: [invitorId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invitor_user")
+  id           String    @id @default(uuid()) @map("pk_invite")
+  invitorId    String    @map("fk_invitor")
+  invitedId    String?   @map("fk_invited")
+  lineId       String?   @map("fk_line")
+  invitedEmail String    @map("invited_email") @db.VarChar
+  role         String    @map("role") @db.Char(1)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  acceptedAt   DateTime? @map("accepted_at") @db.Timestamp(6)
+  userInvited  User?     @relation("user_invited", fields: [invitedId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invite_user")
+  line         Line?     @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invite_line")
+  invitorUser  User      @relation("invitor_user", fields: [invitorId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invitor_user")
 
   @@map("invite")
 }
@@ -87,7 +88,6 @@ model Login {
 model Manager {
   id          Int                 @id @default(autoincrement()) @map("pk_manager")
   userId      String              @unique @map("fk_user")
-  status      String              @map("status") @db.Char(1)
   user        User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "manager_user")
   permissions ManagerPermission[]
 

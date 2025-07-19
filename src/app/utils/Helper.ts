@@ -1,3 +1,5 @@
+import { RoleEnum } from "../enums";
+
 export class Helper {
     static isValidCPF(cpf:string) : boolean {
         // Remove caracteres não numéricos
@@ -48,5 +50,10 @@ export class Helper {
         const digits = phone.replace(/[^\d]/g, '');
         // Verifica se tem 10 (fixo) ou 11 (celular) digitos
         return digits.length === 10 || digits.length === 11;
+    }
+
+    static isValidRole(role:string) : boolean {
+        // Validar se a string equivale a "M", "D" ou "P"
+        return Object.values(RoleEnum).includes(role as RoleEnum);
     }
 }
