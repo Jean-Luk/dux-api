@@ -49,4 +49,17 @@ export class AuthController {
         }
     }
 
+    static async logout(req: Request, res: Response, next: NextFunction) {
+        try {
+            const authToken = req.cookies["dux_auth_token"]
+
+            await AuthService.logout({authToken});
+            
+            res.clearCookie("dux_auth_token").sendStatus(204);
+
+        } catch (err) {
+            next(err);
+        }
+    }
+
 }

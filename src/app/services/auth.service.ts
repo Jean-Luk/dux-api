@@ -26,6 +26,10 @@ interface LoginResultInterface {
     authToken: string
 }
 
+interface LogoutInterface {
+    authToken: string,
+}
+
 export class AuthService {
     static async register ({email, cpf, name, lastName, phone, password}: RegisterInterface) {
         try {
@@ -146,6 +150,20 @@ export class AuthService {
 
         } catch (error: any) {
             throw new AppError(error.message || 'Erro interno ao realizar login', error.statusCode || 500);
+        }
+    }
+
+    static async logout ({authToken} : LogoutInterface): Promise<void> {
+        try {
+
+            // Se o authtoken for válido:
+            if (typeof(authToken) === "string") {
+                // Deleta a sessão do banco de dados
+                await prisma.session.delete({ where: { authToken } });
+            }
+            
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao realizar logout', error.statusCode || 500);
         }
     }
 }
