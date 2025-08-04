@@ -8,19 +8,19 @@ import { RouteDefinition } from '../../types/RouteDefinition';
 const routes: RouteDefinition[] = [
     {
         method:'get',
-        path:'/list',
+        path:'',
         middlewares:[requireAuth],
         controller:InviteController.list,
     },
     {
         method:'get',
-        path:'/listPending',
+        path:'/pending',
         middlewares:[requireAuth],
         controller:InviteController.listPending,
     },
     {
         method:'post',
-        path:'/send',
+        path:'',
         middlewares:[requireAuth, requireManager],
         controller:InviteController.send,
         body: [
@@ -31,21 +31,15 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'put',
-        path:'/accept',
+        path:'/:id/accept',
         middlewares:[requireAuth],
         controller:InviteController.accept,
-        body: [
-            {name:"inviteId", type:"string", required:true}
-        ]
     },
     {
         method:'delete',
-        path:'/decline',
+        path:'/:id',
         middlewares:[requireAuth],
         controller:InviteController.decline,
-        body: [
-            {name:"inviteId", type:"string", required:true}
-        ]
     },
 ]
 

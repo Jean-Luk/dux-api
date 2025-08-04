@@ -22,8 +22,8 @@ for (const file of routeFiles) {
 
 	for(const route of routes as RouteDefinition[]) {
 		const { method, path, controller, middlewares=[], body } = route;
-		if (method === "post" || method == "patch" || method === "put") {
-			router[method](`${prefix}${path}`, validateBody(body ?? undefined), ...middlewares, controller)
+		if (body) {
+			router[method](`${prefix}${path}`, validateBody(body), ...middlewares, controller)
 		} else {
 			router[method](`${prefix}${path}`, ...middlewares, controller)
 		}
