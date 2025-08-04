@@ -1,10 +1,15 @@
-import { Router } from 'express';
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
 import { ManagerController } from '../controllers/manager.controller';
+import { RouteDefinition } from '../../types/RouteDefinition';
 
-const router = Router();
+const routes: RouteDefinition[] = [
+    {
+        method:'get',
+        path:'/permissions',
+        middlewares:[requireAuth, requireManager],
+        controller:ManagerController.permissions
+    }
+]
 
-router.get('/permissions', requireAuth, requireManager, ManagerController.permissions);
-
-export default router;
+export default routes;

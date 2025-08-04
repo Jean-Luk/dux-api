@@ -167,10 +167,6 @@ export class InviteService {
     static async accept ({user, inviteId}: AcceptInterface): Promise<Invite> {
         try {
 
-            // Verifica se foi especificado o id do convite
-            if (!inviteId) {
-                throw new AppError("Convite não especificado", 400)
-            }
             // Verifica se o convite existe
             const invite = await prisma.invite.findUnique({
                 where: {id:inviteId}
@@ -228,10 +224,6 @@ export class InviteService {
     static async decline ({user, inviteId}: DeclineInterface): Promise<void> {
         try {
 
-            // Verifica se foi especificado o id do convite
-            if (!inviteId) {
-                throw new AppError("Convite não especificado", 400)
-            }
             // Verifica se o convite existe
             const invite = await prisma.invite.findUnique({
                 where: {id:inviteId}

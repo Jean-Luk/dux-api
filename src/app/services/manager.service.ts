@@ -20,8 +20,14 @@ interface HasPermissionInterface {
 }
 
 export class ManagerService {
-    static async create ({user}: CreateInterface, prismaClient : Prisma.TransactionClient = prisma): Promise<Manager> {
+    static async create ({user}: CreateInterface, prismaClient : Prisma.TransactionClient = prisma): Promise<Manager|false> {
         try {
+
+            // Retorna false caso usuário especificado já seja um gestor
+            if(await this.isManager({userId:user.id})) {
+                return false;
+            }
+
             // Cria o gestor
             const newManager = await prismaClient.manager.create({
                 data:{
@@ -35,7 +41,7 @@ export class ManagerService {
             // Cria todas as permissões com o valor padrão para o gestor
             await Promise.all(
                 permissions.map(permission => {
-                    prismaClient.managerPermission.create({
+                    return prismaClient.managerPermission.create({
                         data:{
                             active:permission.defaultValue,
                             managerId:newManager.id,

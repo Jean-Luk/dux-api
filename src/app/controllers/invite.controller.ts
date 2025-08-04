@@ -34,7 +34,7 @@ export class InviteController {
 
     static async accept(req: Request, res: Response, next: NextFunction) {
         try {
-            const result = await InviteService.accept({...req.body, invitor:req.user!});
+            const result = await InviteService.accept({...req.body, user:req.user!});
 
             res.status(200).json(result);
         } catch (err) {
@@ -44,7 +44,7 @@ export class InviteController {
 
     static async decline(req: Request, res: Response, next: NextFunction) {
         try {
-            const result = await InviteService.decline({...req.body, invitor:req.user!});
+            const result = await InviteService.decline({...req.body, user:req.user!});
 
             res.status(200).json(result);
         } catch (err) {

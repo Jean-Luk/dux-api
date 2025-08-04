@@ -2,6 +2,8 @@ import { Router } from 'express';
 import fg from 'fast-glob';
 import path from 'path';
 import logger from '../../config/logger';
+import { RouteDefinition } from '../../types/RouteDefinition';
+import { validateBody } from '../middlewares/validateBody';
 
 const router = Router();
 
@@ -13,18 +15,19 @@ const routeFiles = fg.sync(['**/*.routes.{ts,js}'], {
 
 for (const file of routeFiles) {
 	const routeModule = require(file);
-	const exportedRouter = routeModule.default;
+	const routes = routeModule.default;
 
-	if (!exportedRouter) {
-		logger.warn(`Arquivo ${file} não exporta um router Express`);
-		continue;
-	}
-
-	// Derivar prefixo a partir do nome do arquivo (ex: auth.routes.ts -> /auth)
 	const fileName = path.basename(file);
 	const prefix = '/' + fileName.split('.')[0];
 
-	router.use(prefix, exportedRouter);
+	for(const route of routes as RouteDefinition[]) {
+		const { method, path, controller, middlewares=[], body } = route;
+		if (method === "post" || method == "patch" || method === "put") {
+			router[method](`${prefix}${path}`, validateBody(body ?? undefined), ...middlewares, controller)
+		} else {
+			router[method](`${prefix}${path}`, ...middlewares, controller)
+		}
+	}
 }
 
 export default router;

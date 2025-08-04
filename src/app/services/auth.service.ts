@@ -32,11 +32,6 @@ export class AuthService {
     static async register ({email, cpf, name, lastName, phone, password}: RegisterInterface) {
         try {
 
-            // Valida campos obrigatórios:
-            if(!email || !cpf || !name || !lastName || !password) {
-                throw new AppError('Todos os campos são obrigatórios', 400);
-            }
-
             // Verifica se os dados são válidos
             if(!Helper.isValidCPF(cpf)) {
                 throw new AppError('CPF inválido', 400);
@@ -107,11 +102,6 @@ export class AuthService {
     
     static async login ({login, password, ephemeral} : LoginInterface): Promise<LoginResultInterface> {
         try {
-            // Valida campos obrigatórios:
-            if (!login || !password) {
-                throw new AppError('Todos os campos são obrigatórios', 400);
-            }
-    
             // Caso seja CPF, remove os caracteres especiais
             if(Helper.isValidCPF(login)) {
                 login = Helper.sanitizeCPF(login);
