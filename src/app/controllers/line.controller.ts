@@ -62,4 +62,49 @@ export class LineController {
         }
     }
 
+    static async getPoints(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.id;
+            const result = await LineService.getPoints({lineId});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async createPoint(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.id;
+            const result = await LineService.createPoint({lineId, ...req.body});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async updatePoint(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.lineid;
+            const pointId = Number(req.params.pointid);
+            const result = await LineService.updatePoint({lineId, pointId, ...req.body});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async deletePoint(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.lineid;
+            const pointId = Number(req.params.pointid);
+            await LineService.deletePoint({lineId, pointId});
+
+            res.status(204).send();            
+        } catch (err) {
+            next(err);
+        }
+    }
 }

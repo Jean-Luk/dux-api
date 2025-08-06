@@ -162,7 +162,7 @@ model Point {
   sequencePosition   Int         @map("sequence_position")
   latitude           Int         @map("latitude")
   longitude          Int         @map("longitude")
-  flavor             String?     @map("flavor") @db.Char(1)
+  flavor             String      @map("flavor") @db.Char(2)
   boardingPassengers Passenger[] @relation("passenger_boarding")
   destinyPassengers  Passenger[] @relation("passenger_destiny")
   dropoffPassengers  Passenger[] @relation("passenger_dropoff")
