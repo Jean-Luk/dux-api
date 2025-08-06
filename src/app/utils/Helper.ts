@@ -56,4 +56,41 @@ export class Helper {
         // Validar se a string equivale a "M", "D" ou "P"
         return Object.values(RoleEnum).includes(role as RoleEnum);
     }
+
+    static isValidTime(time:string) : boolean {
+        // Validar se é uma string com HH:mm
+        return /^\d{2}:\d{2}$/.test(time)
+    }
+
+    static isValidWeekday(weekday:number) : boolean {
+        if(!Number.isInteger(weekday) || weekday < 0 || weekday > 6) {
+            return false;
+        }
+        return true;        
+    }
+
+    /**
+     * Cria um Date com hora "fixa" em UTC, para que o Prisma envie exatamente esse horário para campos @db.Time
+     */
+    static parseHHmmToDate(timeStr: string): Date {
+        const [hourStr, minuteStr, secondStr = '0'] = timeStr.split(':');
+
+        const hours = parseInt(hourStr, 10);
+        const minutes = parseInt(minuteStr, 10);
+        const seconds = parseInt(secondStr, 10);
+
+        if (
+            isNaN(hours) || isNaN(minutes) || isNaN(seconds) ||
+            hours < 0 || hours > 23 ||
+            minutes < 0 || minutes > 59 ||
+            seconds < 0 || seconds > 59
+        ) {
+            throw new Error(`Horário inválido: "${timeStr}". Esperado no formato "HH:mm" ou "HH:mm:ss".`);
+        }
+
+        // Cria um timestamp UTC usando Date.UTC (ano, mês, dia, hora, minuto, segundo)
+        return new Date(Date.UTC(1970, 0, 1, hours, minutes, seconds));
+    }
+
+
 }
