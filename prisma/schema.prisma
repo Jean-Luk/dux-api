@@ -52,9 +52,9 @@ model Invite {
 model Line {
   id                String             @id @default(uuid()) @map("pk_line")
   name              String             @map("name") @db.VarChar
-  departureTime     DateTime?          @map("departure_time") @db.Timestamp(6)
+  departureTime     DateTime?          @map("departure_time") @db.Time
   active            Boolean?           @default(true) @map("active")
-  billDueDate       DateTime?          @map("bill_due_date") @db.Date
+  billDueDate       Int?               @map("bill_due_date") @db.SmallInt
   drivers           Driver[]
   invites           Invite[]
   lineWeekdays      LineWeekday[]
@@ -67,7 +67,7 @@ model Line {
 
 model LineWeekday {
   lineId  String @map("fk_line")
-  weekday String @map("weekday") @db.Char(1)
+  weekday Int    @map("weekday") @db.SmallInt
   line    Line   @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "line_weekday")
 
   @@id([lineId, weekday])
