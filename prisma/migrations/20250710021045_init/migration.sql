@@ -67,7 +67,6 @@ CREATE TABLE "login" (
 CREATE TABLE "manager" (
     "pk_manager" SERIAL NOT NULL,
     "fk_user" INTEGER NOT NULL,
-    "status" CHAR(1) NOT NULL,
 
     CONSTRAINT "manager_pkey" PRIMARY KEY ("pk_manager")
 );
