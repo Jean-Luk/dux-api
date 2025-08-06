@@ -1,5 +1,6 @@
 import { RouteDefinition } from '../../types/RouteDefinition';
 import { LineController } from '../controllers/line.controller';
+import { PointFlavorEnum } from '../enums';
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
 
@@ -47,6 +48,44 @@ const routes: RouteDefinition[] = [
         path:'/:id',
         middlewares:[requireAuth, requireManager],
         controller:LineController.delete,
+    },
+    {
+        method:'get',
+        path:'/:id/points',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.getPoints,
+    },
+    {
+        method:'post',
+        path:'/:id/points',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.createPoint,
+        body: [
+            {name:"address", required:true, type:"string"},
+            {name:"flavor", required:true, type:"string", possibleValues:[PointFlavorEnum.BOARDING_POINT, PointFlavorEnum.DESTINY_POINT, PointFlavorEnum.DROPOFF_POINT]},
+            {name:"latitude", required:true, type:"number"},
+            {name:"longitude", required:true, type:"number"},
+            {name:"sequencePosition", required:true, type:"number"},
+        ]
+    },
+    {
+        method:'patch',
+        path:'/:lineid/points/:pointid',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.updatePoint,
+        body: [
+            {name:"address", required:false, type:"string"},
+            {name:"flavor", required:false, type:"string", possibleValues:[PointFlavorEnum.BOARDING_POINT, PointFlavorEnum.DESTINY_POINT, PointFlavorEnum.DROPOFF_POINT]},
+            {name:"latitude", required:false, type:"number"},
+            {name:"longitude", required:false, type:"number"},
+            {name:"sequencePosition", required:false, type:"number"},
+        ]
+    },
+    {
+        method:'delete',
+        path:'/:lineid/points/:pointid',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.deletePoint,
     },
 ]
 

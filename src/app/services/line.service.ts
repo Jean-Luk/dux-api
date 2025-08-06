@@ -1,5 +1,5 @@
-import { isArray } from "util";
 import prisma from "../../config/prisma";
+import { PointFlavorEnum } from "../enums";
 import { AppError } from "../utils/AppError";
 import { Helper } from "../utils/Helper";
 
@@ -19,11 +19,11 @@ interface CreateInterface {
     active: boolean;
 }
 
-interface getInfoInterface {
+interface GetInfoInterface {
     lineId: string
 }
 
-interface updateInterface {
+interface UpdateInterface {
     lineId?: string;
     name?: string;
     departureTime?: string;
@@ -32,9 +32,38 @@ interface updateInterface {
     billDueDate?: number
 }
 
-interface deleteInterface {
-    lineId: string
+interface DeleteInterface {
+    lineId: string;
 }
+
+interface GetPointsInterface {
+    lineId: string;
+}
+
+interface CreatePointInterface {
+    lineId: string;
+    address: string;
+    sequencePosition: number;
+    latitude: number;
+    longitude: number;
+    flavor: PointFlavorEnum;
+}
+
+interface UpdatePointInterface {
+    lineId: string;
+    pointId: number;
+    address?: string;
+    sequencePosition?: number;
+    latitude?: number;
+    longitude?: number;
+    flavor?: PointFlavorEnum;
+}
+
+interface DeletePointInterface {
+    lineId: string;
+    pointId: number;
+}
+
 
 
 export class LineService {
@@ -105,7 +134,7 @@ export class LineService {
         }
     }
 
-    static async getInfo ({lineId}:getInfoInterface) {
+    static async getInfo ({lineId}:GetInfoInterface) {
         try {
             const line = await prisma.line.findUnique({
                 where:{id:lineId},
@@ -134,7 +163,7 @@ export class LineService {
         }
     }
 
-    static async update ({lineId, name, departureTime, weekdays, active, billDueDate}:updateInterface) {
+    static async update ({lineId, name, departureTime, weekdays, active, billDueDate}:UpdateInterface) {
         try {
             // Trata o nome e verifica se é válido
             const sanitizedName = name?.trim()
@@ -188,7 +217,7 @@ export class LineService {
         }
     }
 
-    static async delete ({lineId}:deleteInterface) {
+    static async delete ({lineId}:DeleteInterface) {
         try {
             const lineToDelete = await prisma.line.findUnique({
                 where:{id:lineId}
@@ -211,4 +240,292 @@ export class LineService {
         }
     }
 
+    static async getPoints ({lineId}: GetPointsInterface) {
+        try {
+            const points = await prisma.point.findMany({
+                where:{lineId},
+                orderBy:{sequencePosition:"asc"}
+            })
+
+            return points;
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao deletar linha', error.statusCode || 500);
+        }
+    }
+
+    static async createPoint ({lineId, address, flavor, latitude, longitude, sequencePosition}: CreatePointInterface) {
+        try {
+
+            if(!Helper.isValidCoordinates(latitude, longitude)) {
+                throw new AppError('Coordenadas inválidas', 400);
+            }
+
+            if(sequencePosition < 1) {
+                throw new AppError('Posição inválida: a sequência deste ponto está incorreta', 400);
+            }
+
+            const line = await prisma.line.findUnique({
+                where:{id:lineId}, 
+                include:{
+                    points:{
+                        select:{flavor:true, sequencePosition:true},
+                        orderBy:{sequencePosition:'asc'}
+                    }
+                }
+                
+            });
+
+            if(!line) {
+                throw new AppError('Linha inexistente', 404);                
+            }
+
+            // Valida se a sequência especificada é válida
+            if(sequencePosition > line.points.length+1) {
+                throw new AppError('Posição inválida: a sequência deste ponto está incorreta', 400);
+            }
+            this.validatePointPosition(flavor, sequencePosition, line.points);
+
+            const newPoint = await prisma.$transaction(async (tx) => {
+
+                await tx.point.updateMany({
+                    data:{
+                        sequencePosition: {
+                            increment: 1
+                        },
+                    },
+                    where:{
+                        lineId,
+                        sequencePosition: {
+                            gte: sequencePosition
+                        }
+                    }
+                })
+
+                const newPoint = await tx.point.create({
+                    data:{
+                        address,
+                        flavor,
+                        latitude,
+                        longitude,
+                        sequencePosition,
+                        lineId
+                    }
+                })
+
+                return newPoint
+            })
+
+            return newPoint;
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao criar ponto', error.statusCode || 500);
+        }
+    }
+
+    static async updatePoint ({lineId, pointId, address, flavor, latitude, longitude, sequencePosition}: UpdatePointInterface) {
+        try {
+
+            if(latitude !== undefined && !Helper.isValidLatitude(latitude)) {
+                throw new AppError('Latitude inválida', 400);
+            }
+            if(longitude !== undefined && !Helper.isValidLongitude(longitude)) {
+                throw new AppError('Longitude inválida', 400);
+            }
+
+            if(isNaN(pointId)) {
+                throw new AppError('Ponto inexistente', 404);
+            }
+
+            const line = await prisma.line.findUnique({
+                where:{id:lineId}, 
+                include:{
+                    points:{
+                        select:{flavor:true, sequencePosition:true},
+                        orderBy:{sequencePosition:'asc'}
+                    }
+                }
+                
+            });
+
+            if(!line) {
+                throw new AppError('Linha inexistente', 404);                
+            }
+
+            const point = await prisma.point.findUnique({
+                where:{id:pointId}
+            })
+
+            if(!point) {
+                throw new AppError('Ponto inexistente', 404);
+            }
+
+            if(flavor === undefined) {
+                flavor = point.flavor as PointFlavorEnum;
+            }
+
+            // Valida se a sequência especificada é válida
+            if(sequencePosition !== undefined) {
+                if(sequencePosition > line.points.length+1 || sequencePosition < 1) {
+                    throw new AppError('Posição inválida: a sequência deste ponto está incorreta', 400);
+                }
+                this.validatePointPosition(flavor, sequencePosition, line.points);
+            }
+
+            const dataToUpdate: any = {}
+            if(address !== undefined) dataToUpdate.address = address;
+            if(flavor !== undefined) dataToUpdate.flavor = flavor;
+            if(latitude !== undefined) dataToUpdate.latitude = latitude;
+            if(longitude !== undefined) dataToUpdate.longitude = longitude;
+            if(sequencePosition !== undefined) dataToUpdate.sequencePosition = sequencePosition;
+            
+            const updatedPoint = await prisma.$transaction(async (tx) => {
+
+                if(sequencePosition !== undefined) {
+                    if(sequencePosition < point.sequencePosition) {
+                        // Caso a nova posição for menor que a anterior, move os pontos intermediários para cima
+                        await tx.point.updateMany({
+                            data:{
+                                sequencePosition: {
+                                    increment: 1
+                                },
+                            },
+                            where:{
+                                lineId,
+                                sequencePosition: {
+                                    gte: sequencePosition,
+                                    lt: point.sequencePosition
+                                }
+                            }
+                        })
+                    } else if (sequencePosition > point.sequencePosition) {
+                        // Caso a nova posição for maior que a anterior, move os pontos intermediários para baixo
+                        await tx.point.updateMany({
+                            data:{
+                                sequencePosition: {
+                                    decrement: 1
+                                },
+                            },
+                            where:{
+                                lineId,
+                                sequencePosition: {
+                                    lte: sequencePosition,
+                                    gt: point.sequencePosition
+                                }
+                            }
+                        })
+                    }
+                }
+
+                const updatedPoint = await tx.point.update({
+                    data:dataToUpdate,
+                    where:{id:pointId}
+                })
+
+                return updatedPoint
+            })
+
+            return updatedPoint;
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao atualizar ponto', error.statusCode || 500);
+        }
+    }    
+
+    static async deletePoint ({lineId, pointId}: DeletePointInterface) {
+        try {
+
+            if(isNaN(pointId)) {
+                throw new AppError('Ponto inexistente', 404);
+            }
+            const line = await prisma.line.findUnique({
+                where:{id:lineId}, 
+                include:{
+                    points:{
+                        select:{flavor:true, sequencePosition:true},
+                        orderBy:{sequencePosition:'asc'}
+                    }
+                }
+                
+            });
+            if(!line) {
+                throw new AppError('Linha inexistente', 404);                
+            }
+            const point = await prisma.point.findUnique({
+                where:{id:pointId}
+            })
+            if(!point) {
+                throw new AppError('Ponto inexistente', 404);
+            }
+
+            const sequencePosition = point.sequencePosition;
+            
+            await prisma.$transaction(async (tx) => {
+
+                // Move os próximos pontos para baixo
+                await tx.point.updateMany({
+                    data:{
+                        sequencePosition: {
+                            decrement: 1
+                        },
+                    },
+                    where:{
+                        lineId,
+                        sequencePosition: {
+                            gt: sequencePosition,
+                        }
+                    }
+                })
+
+                await tx.point.delete({
+                    where:{id:pointId}
+                })
+
+            })
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao deletar ponto', error.statusCode || 500);
+        }
+    }    
+
+    private static validatePointPosition (flavor: PointFlavorEnum, sequencePosition: number, currentPoints: {sequencePosition: number; flavor: string;}[]) {
+        const flavorToNumber = {
+            [PointFlavorEnum.BOARDING_POINT]: 0,
+            [PointFlavorEnum.DESTINY_POINT]: 1,
+            [PointFlavorEnum.DROPOFF_POINT]: 2,
+        }
+
+        const firstByFlavor: Record<PointFlavorEnum, number | undefined> = {
+            [PointFlavorEnum.BOARDING_POINT]: undefined,
+            [PointFlavorEnum.DESTINY_POINT]: undefined,
+            [PointFlavorEnum.DROPOFF_POINT]: undefined,
+        };
+
+        const lastByFlavor: Record<PointFlavorEnum, number | undefined> = {
+            [PointFlavorEnum.BOARDING_POINT]: undefined,
+            [PointFlavorEnum.DESTINY_POINT]: undefined,
+            [PointFlavorEnum.DROPOFF_POINT]: undefined,
+        };
+
+        for (const point of currentPoints) {
+            const flavor = point.flavor as PointFlavorEnum;
+            if (firstByFlavor[flavor] === undefined) {
+                firstByFlavor[flavor] = point.sequencePosition;
+            }
+            lastByFlavor[flavor] = point.sequencePosition;
+        }
+
+        const flavorOrder = flavorToNumber[flavor];
+
+        // Verifica o flavor anterior
+        const previousFlavor = Object.values(PointFlavorEnum).find(f => flavorToNumber[f] === flavorOrder - 1);
+        if (previousFlavor && lastByFlavor[previousFlavor] != null && sequencePosition <= lastByFlavor[previousFlavor]) {
+            throw new AppError("Posição inválida: a sequência deste ponto está incorreta", 400);
+        }
+
+        // Verifica o flavor seguinte
+        const nextFlavor = Object.values(PointFlavorEnum).find(f => flavorToNumber[f] === flavorOrder + 1);
+        if (nextFlavor && firstByFlavor[nextFlavor] != null && sequencePosition >= firstByFlavor[nextFlavor] + 1) {
+            throw new AppError("Posição inválida: a sequência deste ponto está incorreta", 400);
+        }
+    }
 }

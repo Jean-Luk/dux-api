@@ -92,5 +92,16 @@ export class Helper {
         return new Date(Date.UTC(1970, 0, 1, hours, minutes, seconds));
     }
 
+    static isValidLatitude(lat: number): boolean {
+        return typeof lat === 'number' && lat >= -90 && lat <= 90;
+    }
+
+    static isValidLongitude(lng: number): boolean {
+        return typeof lng === 'number' && lng >= -180 && lng <= 180;
+    }
+
+    static isValidCoordinates(lat: number, lng: number): boolean {
+        return this.isValidLatitude(lat) && this.isValidLongitude(lng);
+    }
 
 }
