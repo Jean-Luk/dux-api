@@ -1,5 +1,5 @@
 import prisma from "../../config/prisma";
-import { PointFlavorEnum } from "../enums";
+import { PointFlavorEnum, RoleEnum, StatusEnum } from "../enums";
 import { AppError } from "../utils/AppError";
 import { Helper } from "../utils/Helper";
 
@@ -64,7 +64,26 @@ interface DeletePointInterface {
     pointId: number;
 }
 
+interface GetDriversInterface {
+    lineId: string;
+    status?: string;
+    name?: string;
+}
 
+interface GetPendingDriversInterface {
+    lineId: string;
+}
+
+interface UpdateDriverInterface {
+    lineId: string;
+    driverId: number;
+    status: StatusEnum.ACTIVE|StatusEnum.UNACTIVE;
+}
+
+interface DeleteDriverInterface {
+    lineId: string;
+    driverId: number;
+}
 
 export class LineService {
     static async list ({page=1, limit=10, orderField='name', orderDirection='asc', status="", name=""}: ListInterface) {
@@ -484,6 +503,119 @@ export class LineService {
 
         } catch (error: any) {
             throw new AppError(error.message || 'Erro interno ao deletar ponto', error.statusCode || 500);
+        }
+    }    
+
+    static async getDrivers ({lineId, name, status}: GetDriversInterface) {
+        try {
+
+            if(status && !Helper.isValidStatus(status)) {
+                throw new AppError('Status especificado é inexistente', 400);
+            }
+
+            const drivers = await prisma.driver.findMany({
+                where:{
+                    lineId,
+                    ...(name && {name: {contains:name, mode:"insensitive"}}),
+                    ...(status && {status}),
+                },
+                include:{
+                    user:{select:{
+                        name:true, lastName:true, phone:true
+                    }}
+                },
+                orderBy:{user:{name:"asc"}},
+            })
+
+            return drivers;
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao listar motoristas', error.statusCode || 500);
+        }
+    }
+
+    static async getPendingDrivers ({lineId}: GetPendingDriversInterface) {
+        try {
+            const pendingDrivers = await prisma.invite.findMany({
+                where:{
+                    lineId,
+                    acceptedAt:null,
+                    role:RoleEnum.DRIVER
+                },
+                include:{
+                    userInvited:{select:{
+                        name:true, lastName:true, phone:true
+                    }}
+                },
+                orderBy:{createdAt:"asc"},
+            })
+
+            return pendingDrivers;
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao listar motoristas pendentes', error.statusCode || 500);
+        }
+    }
+
+    static async updateDriver ({lineId, driverId, status}: UpdateDriverInterface) {
+        try {
+
+            if(isNaN(driverId)) {
+                throw new AppError('Motorista inexistente', 404);
+            }
+
+            const driverExists = await prisma.driver.findUnique(
+                {where:{id:driverId, lineId}}
+            )
+
+            if(!driverExists) {
+                throw new AppError("Motorista inexistente", 404);
+            }
+
+            const dataToUpdate: any = {};
+
+            if (status !== undefined) dataToUpdate.status = status;
+
+            const updatedDriver = await prisma.driver.update({
+                where:{id:driverId, lineId},
+                data:dataToUpdate,
+                include:{
+                    user:{select:{
+                        name:true, lastName:true, phone:true
+                    }}
+                }
+            })
+
+            return updatedDriver;
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao atualizar motorista', error.statusCode || 500);
+        }
+    }    
+
+    static async deleteDriver ({lineId, driverId}: DeleteDriverInterface) {
+        try {
+
+            if(isNaN(driverId)) {
+                throw new AppError('Motorista inexistente', 404);
+            }
+
+            const driver = await prisma.driver.findUnique({
+                where:{id:driverId, lineId}
+            })
+
+            if(!driver) {
+                throw new AppError("Motorista inexistente", 404);
+            }
+
+            if(driver.status !== StatusEnum.LEFT && driver.status !== StatusEnum.UNACTIVE) {
+                throw new AppError("Não é possível deletar motoristas com este status", 400);
+            }
+
+            await prisma.driver.delete({
+                where:{id:driverId, lineId}
+            })
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao deletar motorista', error.statusCode || 500);
         }
     }    
 

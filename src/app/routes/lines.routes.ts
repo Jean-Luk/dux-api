@@ -1,6 +1,6 @@
 import { RouteDefinition } from '../../types/RouteDefinition';
 import { LineController } from '../controllers/line.controller';
-import { PointFlavorEnum } from '../enums';
+import { PointFlavorEnum, StatusEnum } from '../enums';
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
 
@@ -86,6 +86,33 @@ const routes: RouteDefinition[] = [
         path:'/:lineid/points/:pointid',
         middlewares:[requireAuth, requireManager],
         controller:LineController.deletePoint,
+    },
+    {
+        method:'get',
+        path:'/:id/drivers',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.getDrivers,
+    },
+    {
+        method:'get',
+        path:'/:id/pendingDrivers',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.getPendingDrivers,
+    },
+    {
+        method:'patch',
+        path:'/:lineid/drivers/:driverid',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.updateDriver,
+        body: [
+            {name:"status", required:true, type:"string", possibleValues:[StatusEnum.ACTIVE, StatusEnum.UNACTIVE]},
+        ]
+    },
+    {
+        method:'delete',
+        path:'/:lineid/drivers/:driverid',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.deleteDriver,
     },
 ]
 

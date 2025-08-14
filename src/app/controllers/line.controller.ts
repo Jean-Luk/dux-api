@@ -62,6 +62,7 @@ export class LineController {
         }
     }
 
+    /** Points functions: */
     static async getPoints(req: Request, res: Response, next: NextFunction) {
         try {
             const lineId = req.params.id;
@@ -72,7 +73,6 @@ export class LineController {
             next(err);
         }
     }
-
     static async createPoint(req: Request, res: Response, next: NextFunction) {
         try {
             const lineId = req.params.id;
@@ -83,7 +83,6 @@ export class LineController {
             next(err);
         }
     }
-
     static async updatePoint(req: Request, res: Response, next: NextFunction) {
         try {
             const lineId = req.params.lineid;
@@ -95,7 +94,6 @@ export class LineController {
             next(err);
         }
     }
-
     static async deletePoint(req: Request, res: Response, next: NextFunction) {
         try {
             const lineId = req.params.lineid;
@@ -107,4 +105,54 @@ export class LineController {
             next(err);
         }
     }
+
+    /** Drivers functions */
+    static async getDrivers(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.id;
+
+            const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+            const name = typeof req.query.name === 'string' ? req.query.name : undefined;
+
+            const result = await LineService.getDrivers({lineId, status, name});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    static async getPendingDrivers(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.id;
+
+            const result = await LineService.getPendingDrivers({lineId});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    static async updateDriver(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.lineid;
+            const driverId = Number(req.params.driverid);
+            const result = await LineService.updateDriver({lineId, driverId, ...req.body});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    static async deleteDriver(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.lineid;
+            const driverId = Number(req.params.driverid);
+            await LineService.deleteDriver({lineId, driverId});
+
+            res.status(204).send();            
+        } catch (err) {
+            next(err);
+        }
+    }
+
 }

@@ -1,4 +1,4 @@
-import { RoleEnum } from "../enums";
+import { RoleEnum, StatusEnum } from "../enums";
 
 export class Helper {
     static isValidCPF(cpf:string) : boolean {
@@ -55,6 +55,11 @@ export class Helper {
     static isValidRole(role:string) : boolean {
         // Validar se a string equivale a "M", "D" ou "P"
         return Object.values(RoleEnum).includes(role as RoleEnum);
+    }
+
+    static isValidStatus(status:string) : boolean {
+        // Validar se a string equivale a "A", "U" ou "L"
+        return Object.values(StatusEnum).includes(status as StatusEnum);
     }
 
     static isValidTime(time:string) : boolean {
