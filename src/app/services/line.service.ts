@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma";
 import { PointFlavorEnum, RoleEnum, StatusEnum } from "../enums";
+import { CardStatusEnum } from "../enums/CardStatusEnum";
 import { AppError } from "../utils/AppError";
 import { Helper } from "../utils/Helper";
 
@@ -83,6 +84,28 @@ interface UpdateDriverInterface {
 interface DeleteDriverInterface {
     lineId: string;
     driverId: number;
+}
+
+interface GetPassengersInterface {
+    lineId: string;
+    status?: string;
+    name?: string;
+}
+
+interface GetPendingPassengersInterface {
+    lineId: string;
+}
+
+interface UpdatePassengerInterface {
+    lineId: string;
+    passengerId: number;
+    status: StatusEnum.ACTIVE|StatusEnum.UNACTIVE;
+    cardStatus: CardStatusEnum.WHITE|CardStatusEnum.RED|CardStatusEnum.GREEN;
+}
+
+interface DeletePassengerInterface {
+    lineId: string;
+    passengerId: number;
 }
 
 export class LineService {
@@ -616,6 +639,120 @@ export class LineService {
 
         } catch (error: any) {
             throw new AppError(error.message || 'Erro interno ao deletar motorista', error.statusCode || 500);
+        }
+    }    
+
+    static async getPassengers ({lineId, name, status}: GetPassengersInterface) {
+        try {
+
+            if(status && !Helper.isValidStatus(status)) {
+                throw new AppError('Status especificado é inexistente', 400);
+            }
+
+            const passengers = await prisma.passenger.findMany({
+                where:{
+                    lineId,
+                    ...(name && {name: {contains:name, mode:"insensitive"}}),
+                    ...(status && {status}),
+                },
+                include:{
+                    user:{select:{
+                        name:true, lastName:true, phone:true
+                    }}
+                },
+                orderBy:{user:{name:"asc"}},
+            })
+
+            return passengers;
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao listar passageiros', error.statusCode || 500);
+        }
+    }
+
+    static async getPendingPassengers ({lineId}: GetPendingPassengersInterface) {
+        try {
+            const pendingPassengers = await prisma.invite.findMany({
+                where:{
+                    lineId,
+                    acceptedAt:null,
+                    role:RoleEnum.PASSENGER
+                },
+                include:{
+                    userInvited:{select:{
+                        name:true, lastName:true, phone:true
+                    }}
+                },
+                orderBy:{createdAt:"asc"},
+            })
+
+            return pendingPassengers;
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao listar passageiros pendentes', error.statusCode || 500);
+        }
+    }
+
+    static async updatePassenger ({lineId, passengerId, status, cardStatus}: UpdatePassengerInterface) {
+        try {
+
+            if(isNaN(passengerId)) {
+                throw new AppError('Passageiro inexistente', 404);
+            }
+
+            const passengerExists = await prisma.passenger.findUnique(
+                {where:{id:passengerId, lineId}}
+            )
+
+            if(!passengerExists) {
+                throw new AppError("Passageiro inexistente", 404);
+            }
+
+            const dataToUpdate: any = {};
+
+            if (status !== undefined) dataToUpdate.status = status;
+            if (cardStatus !== undefined) dataToUpdate.cardStatus = cardStatus;
+
+            const updatedPassenger = await prisma.passenger.update({
+                where:{id:passengerId, lineId},
+                data:dataToUpdate,
+                include:{
+                    user:{select:{
+                        name:true, lastName:true, phone:true
+                    }}
+                }
+            })
+
+            return updatedPassenger;
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao atualizar passageiro', error.statusCode || 500);
+        }
+    }    
+
+    static async deletePassenger ({lineId, passengerId}: DeletePassengerInterface) {
+        try {
+
+            if(isNaN(passengerId)) {
+                throw new AppError('Passageiro inexistente', 404);
+            }
+
+            const passenger = await prisma.passenger.findUnique({
+                where:{id:passengerId, lineId}
+            })
+
+            if(!passenger) {
+                throw new AppError("Passageiro inexistente", 404);
+            }
+
+            if(passenger.status !== StatusEnum.LEFT && passenger.status !== StatusEnum.UNACTIVE) {
+                throw new AppError("Não é possível deletar passageiros com este status", 400);
+            }
+
+            await prisma.passenger.delete({
+                where:{id:passengerId, lineId}
+            })
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao deletar passageiro', error.statusCode || 500);
         }
     }    
 

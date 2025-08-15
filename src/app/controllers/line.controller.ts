@@ -155,4 +155,53 @@ export class LineController {
         }
     }
 
+    /** Passengers functions */
+    static async getPassengers(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.id;
+
+            const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+            const name = typeof req.query.name === 'string' ? req.query.name : undefined;
+
+            const result = await LineService.getPassengers({lineId, status, name});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    static async getPendingPassengers(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.id;
+
+            const result = await LineService.getPendingPassengers({lineId});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    static async updatePassenger(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.lineid;
+            const passengerId = Number(req.params.passengerid);
+            const result = await LineService.updatePassenger({lineId, passengerId, ...req.body});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+    static async deletePassenger(req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.lineid;
+            const passengerId = Number(req.params.passengerid);
+            await LineService.deletePassenger({lineId, passengerId});
+
+            res.status(204).send();            
+        } catch (err) {
+            next(err);
+        }
+    }
+
 }

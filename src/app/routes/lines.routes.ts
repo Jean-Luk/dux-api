@@ -1,6 +1,7 @@
 import { RouteDefinition } from '../../types/RouteDefinition';
 import { LineController } from '../controllers/line.controller';
 import { PointFlavorEnum, StatusEnum } from '../enums';
+import { CardStatusEnum } from '../enums/CardStatusEnum';
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
 
@@ -113,6 +114,34 @@ const routes: RouteDefinition[] = [
         path:'/:lineid/drivers/:driverid',
         middlewares:[requireAuth, requireManager],
         controller:LineController.deleteDriver,
+    },
+    {
+        method:'get',
+        path:'/:id/passengers',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.getPassengers,
+    },
+    {
+        method:'get',
+        path:'/:id/pendingPassengers',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.getPendingPassengers,
+    },
+    {
+        method:'patch',
+        path:'/:lineid/passengers/:passengerid',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.updatePassenger,
+        body: [
+            {name:"status", required:false, type:"string", possibleValues:[StatusEnum.ACTIVE, StatusEnum.UNACTIVE]},
+            {name:"cardStatus", required:false, type:"string", possibleValues:[CardStatusEnum.WHITE, CardStatusEnum.RED, CardStatusEnum.GREEN]},
+        ]
+    },
+    {
+        method:'delete',
+        path:'/:lineid/passengers/:passengerid',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.deletePassenger,
     },
 ]
 
