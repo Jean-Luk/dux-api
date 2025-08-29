@@ -410,7 +410,15 @@ export class LineService {
                 if(sequencePosition > line.points.length+1 || sequencePosition < 1) {
                     throw new AppError('Posição inválida: a sequência deste ponto está incorreta', 400);
                 }
-                this.validatePointPosition(flavor, sequencePosition, line.points);
+                this.validatePointPosition(
+                    flavor, 
+                    sequencePosition, 
+                    line.points.filter((p) => p.sequencePosition !== point.sequencePosition)
+                    .map(p => ({
+                        ...p,
+                        sequencePosition: p.sequencePosition > point.sequencePosition ? p.sequencePosition-1 : p.sequencePosition
+                    }))
+                )
             }
 
             const dataToUpdate: any = {}
