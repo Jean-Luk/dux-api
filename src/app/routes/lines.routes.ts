@@ -1,4 +1,4 @@
-import { RouteDefinition } from '../../types/RouteDefinition';
+import { RouteDefinition } from '../../types';
 import { LineController } from '../controllers/line.controller';
 import { PointFlavorEnum, StatusEnum } from '../enums';
 import { CardStatusEnum } from '../enums/CardStatusEnum';

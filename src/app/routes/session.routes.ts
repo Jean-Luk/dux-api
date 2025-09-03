@@ -1,5 +1,5 @@
 import { requireAuth } from '../middlewares/requireAuth';
-import { RouteDefinition } from '../../types/RouteDefinition';
+import { RouteDefinition } from '../../types';
 import { SessionController } from '../controllers/session.controller';
 
 const routes: RouteDefinition[] = [

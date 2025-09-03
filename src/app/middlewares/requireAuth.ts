@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
 import { differenceInMinutes } from 'date-fns';
 import { AppError } from '../utils/AppError';
+import { RoleEnum } from '../enums';
 
 const SESSION_EXPIRATION_MINUTES = Number(process.env.SESSION_EXPIRATION_MINUTES) || 60;
 
@@ -20,7 +21,17 @@ export async function requireAuth (req: Request, res: Response, next: NextFuncti
             include: {
                 login: {
                     include: {
-                        user: true
+                        user: {
+                            include:{
+                                manager:{
+                                    include:{
+                                        permissions:true
+                                    }
+                                },
+                                driver:true,
+                                passenger:true
+                            }
+                        }
                     }
                 }
             }
@@ -45,7 +56,30 @@ export async function requireAuth (req: Request, res: Response, next: NextFuncti
             data: { lastAccess: new Date() }
         });
 
-        req.user = session.login.user;
+        const user = session.login.user;
+        const roles: RoleEnum[] = [];
+        let permissions: number[] = [];
+        if (user.manager) {
+            roles.push(RoleEnum.MANAGER);
+
+            permissions = user.manager.permissions
+                .filter((p) => p.active)
+                .map((p) => p.permissionId)
+        }
+
+        if (user.driver.length > 0) roles.push(RoleEnum.DRIVER);
+        if (user.passenger.length > 0) roles.push(RoleEnum.PASSENGER);
+            
+        req.user = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            cpf: user.cpf,
+            lastName: user.lastName,
+            phone: user.phone,
+            roles,
+            permissions
+        };
 
         next();
     } catch (error : any) {

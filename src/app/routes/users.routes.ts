@@ -1,5 +1,5 @@
 import { UserController } from '../controllers/user.controller';
-import { RouteDefinition } from '../../types/RouteDefinition';
+import { RouteDefinition } from '../../types';
 
 const routes: RouteDefinition[] = [
     {

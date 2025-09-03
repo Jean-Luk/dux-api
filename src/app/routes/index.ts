@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import fg from 'fast-glob';
 import path from 'path';
-import logger from '../../config/logger';
-import { RouteDefinition } from '../../types/RouteDefinition';
+import { RouteDefinition } from '../../types';
 import { validateBody } from '../middlewares/validateBody';
 
 const router = Router();

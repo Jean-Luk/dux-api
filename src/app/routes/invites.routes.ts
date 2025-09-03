@@ -1,7 +1,7 @@
 import { InviteController } from '../controllers/invite.controller';
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
-import { RouteDefinition } from '../../types/RouteDefinition';
+import { RouteDefinition } from '../../types';
 
 const routes: RouteDefinition[] = [
     {
