@@ -70,11 +70,11 @@ export class InviteService {
         try {
 
             // Verifica se o email existe e é válido
-            if(!invitedEmail || !Helper.isValidEmail(invitedEmail)) {
+            if(!Helper.isValidEmail(invitedEmail)) {
                 throw new AppError('E-mail inválido', 400);                
             }
             // Verifica se o cargo do convite existe e é válido
-            if(!role || !Helper.isValidRole(role)) {
+            if(!Helper.isValidRole(role)) {
                 throw new AppError("Cargo do convite inválido", 400);
             }
 
@@ -94,6 +94,33 @@ export class InviteService {
                 if(!invitedUser) {
                     throw new AppError("Não há uma conta vinculada ao e-mail do convite", 422)
                 }
+
+                const inviteExists = await prisma.invite.findFirst({
+                    where:{
+                        invitedEmail,
+                        role,
+                        acceptedAt:null
+                    },
+                    select:{ id:true }
+                })
+
+                if(inviteExists) {
+                    throw new AppError("Já há um convite de gestor para este usuário", 409)
+                }
+
+                const managerExists = await prisma.manager.findFirst({
+                    where:{
+                        user:{
+                            email:invitedEmail
+                        }
+                    },
+                    select:{ id:true }
+                })
+
+                if(managerExists) {
+                    throw new AppError("Este usuário já é um gestor", 409)
+                }
+
                 // Cria o convite
                 const newInvite = await prisma.invite.create({
                     data: {
@@ -124,7 +151,49 @@ export class InviteService {
                 if(!line) {
                     throw new AppError("Linha do convite não existe", 400)
                 }
-                // Cria o convite
+
+                // Verifica se já existe convite para este usuário desta linha
+                const inviteExists = await prisma.invite.findFirst({
+                    where:{
+                        invitedEmail,
+                        lineId,
+                        acceptedAt:null
+                    },
+                    select:{ id:true }
+                })
+                if (inviteExists) {
+                    throw new AppError("Já há um convite desta linha para este usuário", 409)
+                }
+
+                // Verifica se convidado é passageiro desta linha
+                const isPassenger = await prisma.passenger.findFirst({
+                    where:{
+                        user:{
+                            email:invitedEmail
+                        },
+                        lineId
+                    },
+                    select:{ id:true }
+                })
+                if (isPassenger) {
+                    throw new AppError("Este usuário já participa desta linha como passageiro", 409)
+                }
+
+                // Verifica se convidado é motorista desta linha
+                const isDriver = await prisma.driver.findFirst({
+                    where:{
+                        user:{
+                            email:invitedEmail
+                        },
+                        lineId
+                    },
+                    select:{ id:true }
+                })
+                if (isDriver) {
+                    throw new AppError("Este usuário já participa desta linha como motorista", 409)
+                }
+
+                // Após validações, cria o convite
                 const newInvite = await prisma.invite.create({
                     data: {
                         invitedEmail,
@@ -141,7 +210,6 @@ export class InviteService {
         } catch (error: any) {
             throw new AppError(error.message || 'Erro interno ao enviar convite', error.statusCode || 500);
         }
-
     }
 
     static async linkPendingInvites ({user}: LinkPendingInvitesInterface, prismaClient: Prisma.TransactionClient = prisma) {
