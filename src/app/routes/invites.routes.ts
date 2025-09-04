@@ -34,10 +34,16 @@ const routes: RouteDefinition[] = [
         controller:InviteController.accept,
     },
     {
-        method:'delete',
-        path:'/:id',
+        method:'put',
+        path:'/:id/decline',
         middlewares:[requireAuth],
         controller:InviteController.decline,
+    },
+    {
+        method:'delete',
+        path:'/:id',
+        middlewares:[requireAuth, requireManager],
+        controller:InviteController.delete,
     },
 ]
 

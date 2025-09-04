@@ -54,4 +54,15 @@ export class InviteController {
         }
     }
 
+    static async delete(req: Request, res: Response, next: NextFunction) {
+        try {
+            const inviteId = req.params.id;
+            const result = await InviteService.delete({manager:req.manager!, inviteId});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
 }
