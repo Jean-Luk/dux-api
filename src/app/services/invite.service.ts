@@ -13,7 +13,7 @@ interface ListInterface {
 
 interface SendInterface {
     invitedEmail: string,
-    role: 'M'|'D'|'P',
+    role: RoleEnum,
     lineId?: string,
     invitor: User,
     manager: Manager

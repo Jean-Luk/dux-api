@@ -12,7 +12,15 @@ const routes: RouteDefinition[] = [
         path:'',
         middlewares:[requireAuth, requireManager],
         controller:LineController.list,
-    },
+        queryParams:[
+            {name:"page", type:"number"},
+            {name:"limit", type:"number"},
+            {name:"orderField", type:"string", possibleValues:["name", "active", "departureTime", "billDueDate"]},
+            {name:"orderDirection", type:"string", possibleValues:["asc", "desc"]},
+            {name:"status", type:"string", possibleValues:["active", "unactive"]},
+            {name:"name", type:"string"}
+        ]
+    },    
     {
         method:'get',
         path:'/:id',

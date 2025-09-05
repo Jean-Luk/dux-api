@@ -2,6 +2,7 @@ import { InviteController } from '../controllers/invite.controller';
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
 import { RouteDefinition } from '../../types';
+import { RoleEnum } from '../enums';
 
 const routes: RouteDefinition[] = [
     {
@@ -23,7 +24,7 @@ const routes: RouteDefinition[] = [
         controller:InviteController.send,
         body: [
             {name:"invitedEmail", type:"string", required:true},
-            {name:"role", type:"string", required:true, possibleValues:["M", "D", "P"]},
+            {name:"role", type:"string", required:true, possibleValues:[RoleEnum.MANAGER, RoleEnum.DRIVER, RoleEnum.PASSENGER]},
             {name:"lineId", type:"string", required:false},
         ]
     },
