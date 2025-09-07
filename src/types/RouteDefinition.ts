@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express';
-import { PermissionEnum } from '../app/enums';
+import { PermissionEnum } from './enums';
 
 export type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch';
 

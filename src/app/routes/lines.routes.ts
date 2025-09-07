@@ -1,7 +1,7 @@
 import { RouteDefinition } from '../../types';
 import { LineController } from '../controllers/line.controller';
-import { PermissionEnum, PointFlavorEnum, StatusEnum } from '../enums';
-import { CardStatusEnum } from '../enums/CardStatusEnum';
+import { PermissionEnum, PointFlavorEnum, StatusEnum } from '../../types/enums';
+import { CardStatusEnum } from '../../types/enums/CardStatusEnum';
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
 

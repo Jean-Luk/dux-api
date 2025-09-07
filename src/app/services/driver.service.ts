@@ -1,7 +1,7 @@
 import { Manager, Prisma, User } from '@prisma/client';
 import prisma from '../../config/prisma';
 import { AppError } from '../utils/AppError';
-import { StatusEnum } from '../enums';
+import { StatusEnum } from '../../types/enums';
 
 interface CreateInterface {
     user: User,

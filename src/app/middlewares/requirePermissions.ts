@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { AppError } from '../utils/AppError';
-import { PermissionEnum } from '../enums';
+import { PermissionEnum } from '../../types/enums';
 
 export function requirePermission (requiredPermissions: PermissionEnum[]) {
     return (req: Request, res: Response, next: NextFunction) => {

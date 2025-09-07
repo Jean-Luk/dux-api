@@ -1,5 +1,5 @@
 import { Manager } from "@prisma/client";
-import { PermissionEnum, RoleEnum } from "../app/enums";
+import { PermissionEnum, RoleEnum } from "./enums";
 
 export type RequestUser = {
     name: string;

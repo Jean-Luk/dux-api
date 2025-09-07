@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
 import { differenceInMinutes } from 'date-fns';
 import { AppError } from '../utils/AppError';
-import { RoleEnum } from '../enums';
+import { RoleEnum } from '../../types/enums';
 
 const SESSION_EXPIRATION_MINUTES = Number(process.env.SESSION_EXPIRATION_MINUTES) || 60;
 

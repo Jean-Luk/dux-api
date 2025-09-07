@@ -2,7 +2,7 @@ import { InviteController } from '../controllers/invite.controller';
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
 import { RouteDefinition } from '../../types';
-import { RoleEnum } from '../enums';
+import { RoleEnum } from '../../types/enums';
 
 const routes: RouteDefinition[] = [
     {

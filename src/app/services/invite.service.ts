@@ -3,7 +3,7 @@ import prisma from '../../config/prisma';
 import { AppError } from '../utils/AppError';
 import { Helper } from '../utils/Helper';
 import { ManagerService } from './manager.service';
-import { RoleEnum, PermissionEnum } from '../enums';
+import { RoleEnum, PermissionEnum } from '../../types/enums';
 import { DriverService } from './driver.service';
 import { PassengerService } from './passenger.service';
 

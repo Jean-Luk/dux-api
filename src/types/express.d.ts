@@ -1,5 +1,5 @@
 import { Manager, User } from '@prisma/client';
-import { RoleEnum } from '../app/enums';
+import { RoleEnum } from './enums';
 import { RequestUser } from './RequestUser';
 
 declare global {

@@ -1,4 +1,4 @@
-import { RoleEnum, StatusEnum } from "../enums";
+import { RoleEnum, StatusEnum } from "../../types/enums";
 
 export class Helper {
     static isValidCPF(cpf:string) : boolean {
