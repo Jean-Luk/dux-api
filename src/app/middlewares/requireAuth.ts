@@ -8,11 +8,12 @@ const SESSION_EXPIRATION_MINUTES = Number(process.env.SESSION_EXPIRATION_MINUTES
 
 export async function requireAuth (req: Request, res: Response, next: NextFunction) {    
     try {
+        console.log("teste");
         const authToken = req.cookies['dux_auth_token'];
 
         // Se authToken não existe ou é vazio então retorna um objeto vazio
         if (!authToken || authToken === "") {
-            return res.status(401).json({ error: 'Não autenticado' });
+            throw new AppError(`Não autenticado`, 401)
         }
 
         // Procura se existe sessão com o token correspondente
@@ -39,7 +40,7 @@ export async function requireAuth (req: Request, res: Response, next: NextFuncti
 
         // Caso não exista sessão ou não exista usuário, retorna status 401
         if (!session || !session.login?.user) {
-            return res.status(401).json({ error: 'Não autenticado' });
+            throw new AppError(`Não autenticado`, 401)
         }
 
         // Verifica se a sessão já expirou
@@ -47,7 +48,7 @@ export async function requireAuth (req: Request, res: Response, next: NextFuncti
         // Caso já tenha expirado, deleta a sessão e retorna status 401
         if (minutesSinceLastAccess > SESSION_EXPIRATION_MINUTES) {
             await prisma.session.delete({ where: { authToken } });
-            return res.status(401).json({ error: 'Não autenticado' });
+            throw new AppError(`Não autenticado`, 401)
         }
 
         // Atualiza o lastAccess da sessão
@@ -78,7 +79,11 @@ export async function requireAuth (req: Request, res: Response, next: NextFuncti
             lastName: user.lastName,
             phone: user.phone,
             roles,
-            permissions
+            permissions,
+            manager: user.manager ? {
+                id: user.manager.id,
+                userId: user.id
+            } : null
         };
 
         next();

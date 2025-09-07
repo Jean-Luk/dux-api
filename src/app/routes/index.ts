@@ -4,6 +4,7 @@ import path from 'path';
 import { RouteDefinition } from '../../types';
 import { validateBody } from '../middlewares/validateBody';
 import { validateQueryParams } from '../middlewares/validateQueryParams';
+import { requirePermission } from '../middlewares/requirePermissions';
 
 const router = Router();
 
@@ -21,7 +22,8 @@ for (const file of routeFiles) {
 	const prefix = '/' + fileName.split('.')[0];
 
 	for(const route of routes as RouteDefinition[]) {
-		const { method, path, controller, middlewares=[], body, queryParams } = route;
+		const { method, path, controller, middlewares=[], body, queryParams, requiredPermissions } = route;
+
 		const middlewaresToAdd = [];
 		if (body) {
 			middlewaresToAdd.push(validateBody(body))
@@ -29,10 +31,14 @@ for (const file of routeFiles) {
 		if(queryParams) {
 			middlewaresToAdd.push(validateQueryParams(queryParams))
 		}
+		if(requiredPermissions) {
+			middlewaresToAdd.push(requirePermission(requiredPermissions))
+		}
+
 		router[method](
 			`${prefix}${path}`, 
-			...middlewaresToAdd, 
 			...middlewares, 
+			...middlewaresToAdd, 
 			controller
 		)
 	}

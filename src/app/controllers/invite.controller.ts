@@ -24,7 +24,7 @@ export class InviteController {
 
     static async send(req: Request, res: Response, next: NextFunction) {
         try {
-            const result = await InviteService.send({...req.body, invitor:req.user!, manager:req.manager!});
+            const result = await InviteService.send({...req.body, invitor:req.user!, manager:req.user!.manager!});
 
             res.status(200).json(result);
         } catch (err) {
@@ -57,7 +57,7 @@ export class InviteController {
     static async delete(req: Request, res: Response, next: NextFunction) {
         try {
             const inviteId = req.params.id;
-            const result = await InviteService.delete({manager:req.manager!, inviteId});
+            const result = await InviteService.delete({manager:req.user!.manager!, inviteId});
 
             res.status(200).json(result);
         } catch (err) {

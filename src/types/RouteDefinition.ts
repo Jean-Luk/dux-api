@@ -1,4 +1,5 @@
 import { RequestHandler } from 'express';
+import { PermissionEnum } from '../app/enums';
 
 export type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch';
 
@@ -23,6 +24,7 @@ export interface RouteDefinition {
     path: string;
     controller: RequestHandler;
     middlewares?: RequestHandler[];
+    requiredPermissions?: PermissionEnum[];
     body?: BodyField[];
     queryParams?: QueryParamField[];
 }

@@ -1,4 +1,5 @@
-import { RoleEnum } from "../app/enums";
+import { Manager } from "@prisma/client";
+import { PermissionEnum, RoleEnum } from "../app/enums";
 
 export type RequestUser = {
     name: string;
@@ -7,6 +8,7 @@ export type RequestUser = {
     cpf: string;
     lastName: string;
     phone: string | null;
-    permissions: number[];
-    roles: RoleEnum[]
+    permissions: PermissionEnum[];
+    roles: RoleEnum[];
+    manager: Manager|null;
 }
