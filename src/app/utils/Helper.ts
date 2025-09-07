@@ -109,4 +109,8 @@ export class Helper {
         return this.isValidLatitude(lat) && this.isValidLongitude(lng);
     }
 
+    static getEnumValues<E>(e:E): E[keyof E][] {
+        return Object.values(e as any).filter(v => typeof(v) === "number") as any;
+    }
+
 }

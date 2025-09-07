@@ -1,6 +1,5 @@
 import prisma from "../../config/prisma";
-import { PointFlavorEnum, RoleEnum, StatusEnum } from "../../types/enums";
-import { CardStatusEnum } from "../../types/enums/CardStatusEnum";
+import { PointFlavorEnum, RoleEnum, StatusEnum, CardStatusEnum } from "../../types/enums";
 import { AppError } from "../utils/AppError";
 import { Helper } from "../utils/Helper";
 

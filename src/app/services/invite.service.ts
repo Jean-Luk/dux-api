@@ -92,7 +92,7 @@ export class InviteService {
             // Se for convite para gestor:
             if(role === RoleEnum.MANAGER) {
                 // Verifica se o gestor tem permissão para convidar outros gestores:
-                if(!ManagerService.hasPermission({managerId:manager.id, permissionId:PermissionEnum.INVITE_MANAGERS})) {
+                if(!ManagerService.hasPermission({managerId:manager.id, permissionId:PermissionEnum.EDIT_MANAGERS})) {
                     throw new AppError("Não possui permissão para enviar este tipo de convite", 403);
                 }
 
@@ -335,7 +335,7 @@ export class InviteService {
                 throw new AppError("Este convite já foi respondido", 422)
             }
             const requiredPermission = 
-                invite.role === RoleEnum.MANAGER ? PermissionEnum.INVITE_MANAGERS 
+                invite.role === RoleEnum.MANAGER ? PermissionEnum.EDIT_MANAGERS 
                 : invite.role === RoleEnum.DRIVER ? PermissionEnum.EDIT_DRIVERS :
                 PermissionEnum.EDIT_PASSENGERS
 

@@ -4,7 +4,7 @@ import { LineService } from '../services/line.service';
 export class LineController {
     static async list(req: Request, res: Response, next: NextFunction) {
         try {
-            const result = await LineService.list(req.query);
+            const result = await LineService.list(req.parsedQuery);
 
             res.status(200).json(result);
         } catch (err) {

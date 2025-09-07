@@ -8,6 +8,8 @@ export function validateQueryParams(expectedQueryParams?: QueryParamField[])  {
         if(!expectedQueryParams || expectedQueryParams.length === 0) {
             return next()
         }
+        req.parsedQuery = {};
+
         const params = req.query;
         for (const expectedParam of expectedQueryParams) {
 
@@ -42,8 +44,8 @@ export function validateQueryParams(expectedQueryParams?: QueryParamField[])  {
                     if (isNaN(parsedValue)) {
                         throw new AppError(`Parâmetro ${expectedParam.name} inválido`, 400)
                     }
+                    break;
                 case "string":
-                default:
                     parsedValue = String(value);
             }
 
@@ -52,6 +54,8 @@ export function validateQueryParams(expectedQueryParams?: QueryParamField[])  {
                     throw new AppError(`Parâmetro ${expectedParam.name} possui valor ${parsedValue} mas deve ser: [${expectedParam.possibleValues.join(", ")}]`, 400)
                 }
             }
+            
+            req.parsedQuery[expectedParam.name] = parsedValue;
         }
 
         next();

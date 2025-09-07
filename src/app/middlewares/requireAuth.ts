@@ -8,7 +8,6 @@ const SESSION_EXPIRATION_MINUTES = Number(process.env.SESSION_EXPIRATION_MINUTES
 
 export async function requireAuth (req: Request, res: Response, next: NextFunction) {    
     try {
-        console.log("teste");
         const authToken = req.cookies['dux_auth_token'];
 
         // Se authToken não existe ou é vazio então retorna um objeto vazio
