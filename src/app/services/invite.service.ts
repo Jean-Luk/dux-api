@@ -39,11 +39,25 @@ interface DeleteInterface {
 }
 
 export class InviteService {
-    static async list ({user}: ListInterface): Promise<Invite[]> {
+    static async list ({user}: ListInterface) {
         try {
             // Busca todos os convites do usuário logado
             const invites = await prisma.invite.findMany({
-                where:{invitedId:user.id}
+                select:{
+                    id:true, 
+                    role:true,
+                    createdAt:true, 
+                    acceptedAt:true, 
+                    declinedAt:true, 
+                    invitorUser:{
+                        select:{name:true, lastName:true}
+                    },
+                    line:{
+                        select:{name:true}
+                    }
+                },
+                where:{invitedId:user.id},
+                orderBy:{createdAt:"desc"}
             })
 
             return invites;
@@ -54,15 +68,29 @@ export class InviteService {
 
     }
 
-    static async listPending ({user}: ListInterface): Promise<Invite[]> {
+    static async listPending ({user}: ListInterface) {
         try {
             // Busca todos os convites não aceitos do usuário logado
             const invites = await prisma.invite.findMany({
+                select:{
+                    id:true, 
+                    role:true,
+                    createdAt:true, 
+                    acceptedAt:true, 
+                    declinedAt:true, 
+                    invitorUser:{
+                        select:{name:true, lastName:true}
+                    },
+                    line:{
+                        select:{name:true}
+                    }
+                },
                 where:{
                     invitedId:user.id, 
                     acceptedAt:null, 
                     declinedAt:null
-                }
+                },
+                orderBy:{createdAt:"desc"}
             })
 
             return invites;
