@@ -1,22 +1,21 @@
 import prisma from "../../config/prisma";
-import { PointFlavorEnum, RoleEnum, StatusEnum } from "../enums";
-import { CardStatusEnum } from "../enums/CardStatusEnum";
+import { PointFlavorEnum, RoleEnum, StatusEnum, CardStatusEnum } from "../../types/enums";
 import { AppError } from "../utils/AppError";
 import { Helper } from "../utils/Helper";
 
 interface ListInterface {
     page?: number;
     limit?: number;
-    orderField?: string;
-    orderDirection?: string;
-    status?: string;
+    orderField?: "name"|"active"|"departureTime"|"billDueDate";
+    orderDirection?: "asc"|"desc";
+    status?: "active"|"unactive";
     name?: string;
 }
 
 interface CreateInterface {
     name: string;
     departureTime: string;
-    weekdays: number[];
+    weekdays: (0|1|2|3|4|5|6)[];
     active: boolean;
 }
 
@@ -28,7 +27,7 @@ interface UpdateInterface {
     lineId?: string;
     name?: string;
     departureTime?: string;
-    weekdays?: number[];
+    weekdays?: (0|1|2|3|4|5|6)[];
     active?: boolean;
     billDueDate?: number
 }
@@ -100,7 +99,7 @@ interface UpdatePassengerInterface {
     lineId: string;
     passengerId: number;
     status: StatusEnum.ACTIVE|StatusEnum.UNACTIVE;
-    cardStatus: CardStatusEnum.WHITE|CardStatusEnum.RED|CardStatusEnum.GREEN;
+    cardStatus: CardStatusEnum;
 }
 
 interface DeletePassengerInterface {
@@ -109,7 +108,7 @@ interface DeletePassengerInterface {
 }
 
 export class LineService {
-    static async list ({page=1, limit=10, orderField='name', orderDirection='asc', status="", name=""}: ListInterface) {
+    static async list ({page=1, limit=10, orderField='name', orderDirection='asc', status, name=""}: ListInterface) {
         try {
             const skip = (page - 1) * limit;
 
@@ -228,7 +227,7 @@ export class LineService {
             if (weekdays) {
                 dataToUpdate.lineWeekdays = {
                     deleteMany:{},
-                    create: weekdays?.map(num => ({
+                    create: weekdays.map(num => ({
                         weekday: num
                     }))
                 };
@@ -410,7 +409,15 @@ export class LineService {
                 if(sequencePosition > line.points.length+1 || sequencePosition < 1) {
                     throw new AppError('Posição inválida: a sequência deste ponto está incorreta', 400);
                 }
-                this.validatePointPosition(flavor, sequencePosition, line.points);
+                this.validatePointPosition(
+                    flavor, 
+                    sequencePosition, 
+                    line.points.filter((p) => p.sequencePosition !== point.sequencePosition)
+                    .map(p => ({
+                        ...p,
+                        sequencePosition: p.sequencePosition > point.sequencePosition ? p.sequencePosition-1 : p.sequencePosition
+                    }))
+                )
             }
 
             const dataToUpdate: any = {}

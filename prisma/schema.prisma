@@ -42,6 +42,7 @@ model Invite {
   role         String    @map("role") @db.Char(1)
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
   acceptedAt   DateTime? @map("accepted_at") @db.Timestamp(6)
+  declinedAt   DateTime? @map("declined_at") @db.Timestamp(6)
   userInvited  User?     @relation("user_invited", fields: [invitedId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invite_user")
   line         Line?     @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invite_line")
   invitorUser  User      @relation("invitor_user", fields: [invitorId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "invitor_user")

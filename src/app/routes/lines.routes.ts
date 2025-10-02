@@ -1,7 +1,6 @@
-import { RouteDefinition } from '../../types/RouteDefinition';
+import { RouteDefinition } from '../../types';
 import { LineController } from '../controllers/line.controller';
-import { PointFlavorEnum, StatusEnum } from '../enums';
-import { CardStatusEnum } from '../enums/CardStatusEnum';
+import { PermissionEnum, PointFlavorEnum, StatusEnum, CardStatusEnum } from '../../types/enums';
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
 
@@ -12,7 +11,15 @@ const routes: RouteDefinition[] = [
         path:'',
         middlewares:[requireAuth, requireManager],
         controller:LineController.list,
-    },
+        queryParams:[
+            {name:"page", type:"number"},
+            {name:"limit", type:"number"},
+            {name:"orderField", type:"string", possibleValues:["name", "active", "departureTime", "billDueDate"]},
+            {name:"orderDirection", type:"string", possibleValues:["asc", "desc"]},
+            {name:"status", type:"string", possibleValues:["active", "unactive"]},
+            {name:"name", type:"string"}
+        ]
+    },    
     {
         method:'get',
         path:'/:id',
@@ -23,6 +30,7 @@ const routes: RouteDefinition[] = [
         method:'post',
         path:'',
         middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.OPERATE_LINES],
         controller:LineController.create,
         body:[
             {name:"name", type:"string", required:true},
@@ -35,6 +43,7 @@ const routes: RouteDefinition[] = [
         method:'patch',
         path:'/:id',
         middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.OPERATE_LINES],
         controller:LineController.update,
         body:[
             {name:"name", type:"string", required:false},
@@ -48,6 +57,7 @@ const routes: RouteDefinition[] = [
         method:'delete',
         path:'/:id',
         middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.OPERATE_LINES],
         controller:LineController.delete,
     },
     {
@@ -60,6 +70,7 @@ const routes: RouteDefinition[] = [
         method:'post',
         path:'/:id/points',
         middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.OPERATE_LINES],
         controller:LineController.createPoint,
         body: [
             {name:"address", required:true, type:"string"},
@@ -73,6 +84,7 @@ const routes: RouteDefinition[] = [
         method:'patch',
         path:'/:lineid/points/:pointid',
         middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.OPERATE_LINES],
         controller:LineController.updatePoint,
         body: [
             {name:"address", required:false, type:"string"},
@@ -85,6 +97,7 @@ const routes: RouteDefinition[] = [
     {
         method:'delete',
         path:'/:lineid/points/:pointid',
+        requiredPermissions:[PermissionEnum.OPERATE_LINES],
         middlewares:[requireAuth, requireManager],
         controller:LineController.deletePoint,
     },
@@ -104,6 +117,7 @@ const routes: RouteDefinition[] = [
         method:'patch',
         path:'/:lineid/drivers/:driverid',
         middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.EDIT_DRIVERS],
         controller:LineController.updateDriver,
         body: [
             {name:"status", required:true, type:"string", possibleValues:[StatusEnum.ACTIVE, StatusEnum.UNACTIVE]},
@@ -112,6 +126,7 @@ const routes: RouteDefinition[] = [
     {
         method:'delete',
         path:'/:lineid/drivers/:driverid',
+        requiredPermissions:[PermissionEnum.EDIT_DRIVERS],
         middlewares:[requireAuth, requireManager],
         controller:LineController.deleteDriver,
     },
@@ -130,6 +145,7 @@ const routes: RouteDefinition[] = [
     {
         method:'patch',
         path:'/:lineid/passengers/:passengerid',
+        requiredPermissions:[PermissionEnum.EDIT_PASSENGERS],
         middlewares:[requireAuth, requireManager],
         controller:LineController.updatePassenger,
         body: [
@@ -140,6 +156,7 @@ const routes: RouteDefinition[] = [
     {
         method:'delete',
         path:'/:lineid/passengers/:passengerid',
+        requiredPermissions:[PermissionEnum.EDIT_PASSENGERS],
         middlewares:[requireAuth, requireManager],
         controller:LineController.deletePassenger,
     },

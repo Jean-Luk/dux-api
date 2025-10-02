@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { BodyField } from '../../types/RouteDefinition';
 import { AppError } from '../utils/AppError';
+import { BodyField } from '../../types';
 
 export function validateBody(expectedBody?: BodyField[])  {   
     return (req: Request, res: Response, next: NextFunction) => {

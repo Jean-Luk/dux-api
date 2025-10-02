@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
 import { differenceInMinutes } from 'date-fns';
 import { AppError } from '../utils/AppError';
+import { RoleEnum } from '../../types/enums';
 
 const SESSION_EXPIRATION_MINUTES = Number(process.env.SESSION_EXPIRATION_MINUTES) || 60;
 
@@ -11,7 +12,7 @@ export async function requireAuth (req: Request, res: Response, next: NextFuncti
 
         // Se authToken não existe ou é vazio então retorna um objeto vazio
         if (!authToken || authToken === "") {
-            return res.status(401).json({ error: 'Não autenticado' });
+            throw new AppError(`Não autenticado`, 401)
         }
 
         // Procura se existe sessão com o token correspondente
@@ -20,7 +21,17 @@ export async function requireAuth (req: Request, res: Response, next: NextFuncti
             include: {
                 login: {
                     include: {
-                        user: true
+                        user: {
+                            include:{
+                                manager:{
+                                    include:{
+                                        permissions:true
+                                    }
+                                },
+                                driver:true,
+                                passenger:true
+                            }
+                        }
                     }
                 }
             }
@@ -28,7 +39,7 @@ export async function requireAuth (req: Request, res: Response, next: NextFuncti
 
         // Caso não exista sessão ou não exista usuário, retorna status 401
         if (!session || !session.login?.user) {
-            return res.status(401).json({ error: 'Não autenticado' });
+            throw new AppError(`Não autenticado`, 401)
         }
 
         // Verifica se a sessão já expirou
@@ -36,7 +47,7 @@ export async function requireAuth (req: Request, res: Response, next: NextFuncti
         // Caso já tenha expirado, deleta a sessão e retorna status 401
         if (minutesSinceLastAccess > SESSION_EXPIRATION_MINUTES) {
             await prisma.session.delete({ where: { authToken } });
-            return res.status(401).json({ error: 'Não autenticado' });
+            throw new AppError(`Não autenticado`, 401)
         }
 
         // Atualiza o lastAccess da sessão
@@ -45,7 +56,34 @@ export async function requireAuth (req: Request, res: Response, next: NextFuncti
             data: { lastAccess: new Date() }
         });
 
-        req.user = session.login.user;
+        const user = session.login.user;
+        const roles: RoleEnum[] = [];
+        let permissions: number[] = [];
+        if (user.manager) {
+            roles.push(RoleEnum.MANAGER);
+
+            permissions = user.manager.permissions
+                .filter((p) => p.active)
+                .map((p) => p.permissionId)
+        }
+
+        if (user.driver.length > 0) roles.push(RoleEnum.DRIVER);
+        if (user.passenger.length > 0) roles.push(RoleEnum.PASSENGER);
+            
+        req.user = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            cpf: user.cpf,
+            lastName: user.lastName,
+            phone: user.phone,
+            roles,
+            permissions,
+            manager: user.manager ? {
+                id: user.manager.id,
+                userId: user.id
+            } : null
+        };
 
         next();
     } catch (error : any) {

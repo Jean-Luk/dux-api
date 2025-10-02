@@ -1,7 +1,9 @@
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
 import { ManagerController } from '../controllers/manager.controller';
-import { RouteDefinition } from '../../types/RouteDefinition';
+import { RouteDefinition } from '../../types';
+import { PermissionEnum } from '../../types/enums';
+import { Helper } from '../utils/Helper';
 
 const routes: RouteDefinition[] = [
     {
@@ -9,6 +11,47 @@ const routes: RouteDefinition[] = [
         path:'/permissions',
         middlewares:[requireAuth, requireManager],
         controller:ManagerController.permissions
+    },
+    {
+        method:'delete',
+        path:'/:id',
+        middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.EDIT_MANAGERS],
+        controller:ManagerController.delete
+    },
+    {
+        method:'patch',
+        path:'/:id/permissions',
+        middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.EDIT_PERMISSIONS],
+        controller:ManagerController.patchPermissions,
+        body:[
+            {name:"toAdd", type:"array", possibleValues:Helper.getEnumValues(PermissionEnum)},
+            {name:"toRemove", type:"array", possibleValues:Helper.getEnumValues(PermissionEnum)}
+        ]
+    },
+    {
+        method:'get',
+        path:'/list',
+        middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.EDIT_MANAGERS],
+        controller:ManagerController.list,
+        queryParams:[
+            {name:"page", type:"number"},
+            {name:"limit", type:"number"},
+            {name:"orderField", type:"string", possibleValues:["name", "phone", "email"]},
+            {name:"orderDirection", type:"string", possibleValues:["asc", "desc"]},
+            {name:"name", type:"string"},
+            {name:"email", type:"string"},
+            {name:"phone", type:"string"}
+        ]
+    },
+    {
+        method:'get',
+        path:'/:id',
+        middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.EDIT_MANAGERS],
+        controller:ManagerController.getInfo
     }
 ]
 

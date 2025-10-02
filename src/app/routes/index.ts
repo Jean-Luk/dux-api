@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import fg from 'fast-glob';
 import path from 'path';
-import logger from '../../config/logger';
-import { RouteDefinition } from '../../types/RouteDefinition';
+import { RouteDefinition } from '../../types';
 import { validateBody } from '../middlewares/validateBody';
+import { validateQueryParams } from '../middlewares/validateQueryParams';
+import { requirePermission } from '../middlewares/requirePermissions';
 
 const router = Router();
 
@@ -21,12 +22,25 @@ for (const file of routeFiles) {
 	const prefix = '/' + fileName.split('.')[0];
 
 	for(const route of routes as RouteDefinition[]) {
-		const { method, path, controller, middlewares=[], body } = route;
+		const { method, path, controller, middlewares=[], body, queryParams, requiredPermissions } = route;
+
+		const middlewaresToAdd = [];
 		if (body) {
-			router[method](`${prefix}${path}`, validateBody(body), ...middlewares, controller)
-		} else {
-			router[method](`${prefix}${path}`, ...middlewares, controller)
+			middlewaresToAdd.push(validateBody(body))
 		}
+		if(queryParams) {
+			middlewaresToAdd.push(validateQueryParams(queryParams))
+		}
+		if(requiredPermissions) {
+			middlewaresToAdd.push(requirePermission(requiredPermissions))
+		}
+
+		router[method](
+			`${prefix}${path}`, 
+			...middlewares, 
+			...middlewaresToAdd, 
+			controller
+		)
 	}
 }
 

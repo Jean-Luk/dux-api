@@ -1,4 +1,4 @@
-import { RoleEnum, StatusEnum } from "../enums";
+import { RoleEnum, StatusEnum } from "../../types/enums";
 
 export class Helper {
     static isValidCPF(cpf:string) : boolean {
@@ -107,6 +107,10 @@ export class Helper {
 
     static isValidCoordinates(lat: number, lng: number): boolean {
         return this.isValidLatitude(lat) && this.isValidLongitude(lng);
+    }
+
+    static getEnumValues<E>(e:E): E[keyof E][] {
+        return Object.values(e as any).filter(v => typeof(v) === "number") as any;
     }
 
 }

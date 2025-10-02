@@ -3,7 +3,7 @@ import prisma from '../../config/prisma';
 import { AppError } from '../utils/AppError';
 import { Helper } from '../utils/Helper';
 import { ManagerService } from './manager.service';
-import { RoleEnum, PermissionEnum } from '../enums';
+import { RoleEnum, PermissionEnum } from '../../types/enums';
 import { DriverService } from './driver.service';
 import { PassengerService } from './passenger.service';
 
@@ -13,7 +13,7 @@ interface ListInterface {
 
 interface SendInterface {
     invitedEmail: string,
-    role: 'M'|'D'|'P',
+    role: RoleEnum,
     lineId?: string,
     invitor: User,
     manager: Manager
@@ -33,13 +33,31 @@ interface DeclineInterface {
     inviteId: string,
 }
 
-export class InviteService {
-    static async list ({user}: ListInterface): Promise<Invite[]> {
-        try {
+interface DeleteInterface {
+    manager: Manager
+    inviteId: string,
+}
 
+export class InviteService {
+    static async list ({user}: ListInterface) {
+        try {
             // Busca todos os convites do usuário logado
             const invites = await prisma.invite.findMany({
-                where:{invitedId:user.id}
+                select:{
+                    id:true, 
+                    role:true,
+                    createdAt:true, 
+                    acceptedAt:true, 
+                    declinedAt:true, 
+                    invitorUser:{
+                        select:{name:true, lastName:true}
+                    },
+                    line:{
+                        select:{name:true}
+                    }
+                },
+                where:{invitedId:user.id},
+                orderBy:{createdAt:"desc"}
             })
 
             return invites;
@@ -50,12 +68,29 @@ export class InviteService {
 
     }
 
-    static async listPending ({user}: ListInterface): Promise<Invite[]> {
+    static async listPending ({user}: ListInterface) {
         try {
-
             // Busca todos os convites não aceitos do usuário logado
             const invites = await prisma.invite.findMany({
-                where:{invitedId:user.id, acceptedAt:null}
+                select:{
+                    id:true, 
+                    role:true,
+                    createdAt:true, 
+                    acceptedAt:true, 
+                    declinedAt:true, 
+                    invitorUser:{
+                        select:{name:true, lastName:true}
+                    },
+                    line:{
+                        select:{name:true}
+                    }
+                },
+                where:{
+                    invitedId:user.id, 
+                    acceptedAt:null, 
+                    declinedAt:null
+                },
+                orderBy:{createdAt:"desc"}
             })
 
             return invites;
@@ -68,13 +103,12 @@ export class InviteService {
 
     static async send ({invitedEmail, role, lineId, invitor, manager}: SendInterface): Promise<Invite> {
         try {
-
             // Verifica se o email existe e é válido
-            if(!invitedEmail || !Helper.isValidEmail(invitedEmail)) {
+            if(!Helper.isValidEmail(invitedEmail)) {
                 throw new AppError('E-mail inválido', 400);                
             }
             // Verifica se o cargo do convite existe e é válido
-            if(!role || !Helper.isValidRole(role)) {
+            if(!Helper.isValidRole(role)) {
                 throw new AppError("Cargo do convite inválido", 400);
             }
 
@@ -86,7 +120,7 @@ export class InviteService {
             // Se for convite para gestor:
             if(role === RoleEnum.MANAGER) {
                 // Verifica se o gestor tem permissão para convidar outros gestores:
-                if(!ManagerService.hasPermission({managerId:manager.id, permissionId:PermissionEnum.INVITE_MANAGERS})) {
+                if(!ManagerService.hasPermission({managerId:manager.id, permissionId:PermissionEnum.EDIT_MANAGERS})) {
                     throw new AppError("Não possui permissão para enviar este tipo de convite", 403);
                 }
 
@@ -94,6 +128,33 @@ export class InviteService {
                 if(!invitedUser) {
                     throw new AppError("Não há uma conta vinculada ao e-mail do convite", 422)
                 }
+
+                const inviteExists = await prisma.invite.findFirst({
+                    where:{
+                        invitedEmail,
+                        role,
+                        acceptedAt:null
+                    },
+                    select:{ id:true }
+                })
+
+                if(inviteExists) {
+                    throw new AppError("Já há um convite de gestor para este usuário", 409)
+                }
+
+                const managerExists = await prisma.manager.findFirst({
+                    where:{
+                        user:{
+                            email:invitedEmail
+                        }
+                    },
+                    select:{ id:true }
+                })
+
+                if(managerExists) {
+                    throw new AppError("Este usuário já é um gestor", 409)
+                }
+
                 // Cria o convite
                 const newInvite = await prisma.invite.create({
                     data: {
@@ -124,7 +185,49 @@ export class InviteService {
                 if(!line) {
                     throw new AppError("Linha do convite não existe", 400)
                 }
-                // Cria o convite
+
+                // Verifica se já existe convite para este usuário desta linha
+                const inviteExists = await prisma.invite.findFirst({
+                    where:{
+                        invitedEmail,
+                        lineId,
+                        acceptedAt:null
+                    },
+                    select:{ id:true }
+                })
+                if (inviteExists) {
+                    throw new AppError("Já há um convite desta linha para este usuário", 409)
+                }
+
+                // Verifica se convidado é passageiro desta linha
+                const isPassenger = await prisma.passenger.findFirst({
+                    where:{
+                        user:{
+                            email:invitedEmail
+                        },
+                        lineId
+                    },
+                    select:{ id:true }
+                })
+                if (isPassenger) {
+                    throw new AppError("Este usuário já participa desta linha como passageiro", 409)
+                }
+
+                // Verifica se convidado é motorista desta linha
+                const isDriver = await prisma.driver.findFirst({
+                    where:{
+                        user:{
+                            email:invitedEmail
+                        },
+                        lineId
+                    },
+                    select:{ id:true }
+                })
+                if (isDriver) {
+                    throw new AppError("Este usuário já participa desta linha como motorista", 409)
+                }
+
+                // Após validações, cria o convite
                 const newInvite = await prisma.invite.create({
                     data: {
                         invitedEmail,
@@ -141,18 +244,16 @@ export class InviteService {
         } catch (error: any) {
             throw new AppError(error.message || 'Erro interno ao enviar convite', error.statusCode || 500);
         }
-
     }
 
     static async linkPendingInvites ({user}: LinkPendingInvitesInterface, prismaClient: Prisma.TransactionClient = prisma) {
         try {
-            // Busca toods os convites pendentes com o email do usuário, porém sem usuário vinculado
+            // Busca todos os convites pendentes com o email do usuário, porém sem usuário vinculado
             // E atualiza eles, vinculando o id do usuário
             await prismaClient.invite.updateMany({
                 where:{
                     invitedId:null, 
-                    invitedEmail:user.email, 
-                    acceptedAt:null
+                    invitedEmail:user.email
                 },
                 data:{
                     invitedId:user.id
@@ -166,7 +267,6 @@ export class InviteService {
 
     static async accept ({user, inviteId}: AcceptInterface): Promise<Invite> {
         try {
-
             // Verifica se o convite existe
             const invite = await prisma.invite.findUnique({
                 where: {id:inviteId}
@@ -178,11 +278,10 @@ export class InviteService {
             if(invite.invitedId !== user.id) {
                 throw new AppError("Convite não é destinado ao usuário", 403)
             }
-            // Verifica se o convite ainda não foi aceito
-            if(invite.acceptedAt) {
-                throw new AppError("Convite já foi aceito", 422)
+            // Verifica se o convite já foi respondido
+            if(invite.acceptedAt || invite.declinedAt) {
+                throw new AppError("Convite já foi respondido", 422)
             }
-
             // Inicia a transaction para atualizar o convite e criar as instâncias do usuário na tabela de gestor/motorista/passageiro:
             const updatedInvite = await prisma.$transaction(async (tx) => {
 
@@ -223,7 +322,6 @@ export class InviteService {
 
     static async decline ({user, inviteId}: DeclineInterface): Promise<void> {
         try {
-
             // Verifica se o convite existe
             const invite = await prisma.invite.findUnique({
                 where: {id:inviteId}
@@ -236,16 +334,50 @@ export class InviteService {
                 throw new AppError("Convite não é destinado ao usuário", 403)
             }
             // Verifica se o convite ainda não foi aceito
-            if(invite.acceptedAt) {
-                throw new AppError("Convite já foi aceito", 422)
+            if(invite.acceptedAt || invite.declinedAt) {
+                throw new AppError("Convite já foi respondido", 422)
             }
+            // Deleta o convite do banco de dados
+            await prisma.invite.update({
+                where: {id:inviteId},
+                data: {declinedAt: new Date()}
+            })
+            
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao recusar convite', error.statusCode || 500);
+        }
+
+    }
+
+    static async delete ({manager, inviteId}: DeleteInterface): Promise<void> {
+        try {
+            // Verifica se o convite existe
+            const invite = await prisma.invite.findUnique({
+                where: {id:inviteId}
+            });
+            if (!invite) {
+                throw new AppError("Convite inexistente", 404)
+            }
+            // Verifica se o convite ainda não foi aceito
+            if(invite.acceptedAt || invite.declinedAt) {
+                throw new AppError("Este convite já foi respondido", 422)
+            }
+            const requiredPermission = 
+                invite.role === RoleEnum.MANAGER ? PermissionEnum.EDIT_MANAGERS 
+                : invite.role === RoleEnum.DRIVER ? PermissionEnum.EDIT_DRIVERS :
+                PermissionEnum.EDIT_PASSENGERS
+
+            if(await ManagerService.hasPermission({managerId:manager.id, permissionId:requiredPermission})) {
+                throw new AppError("Não possui permissão para cancelar este tipo de convite", 403)
+            }
+
             // Deleta o convite do banco de dados
             await prisma.invite.delete({
                 where: {id:inviteId},
             })
             
         } catch (error: any) {
-            throw new AppError(error.message || 'Erro interno ao recusar convite', error.statusCode || 500);
+            throw new AppError(error.message || 'Erro interno ao cancelar convite', error.statusCode || 500);
         }
 
     }
