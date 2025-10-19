@@ -359,7 +359,7 @@ export class InviteService {
                 throw new AppError("Convite inexistente", 404)
             }
             // Verifica se o convite ainda não foi aceito
-            if(invite.acceptedAt || invite.declinedAt) {
+            if(invite.acceptedAt) {
                 throw new AppError("Este convite já foi respondido", 422)
             }
             const requiredPermission = 
@@ -367,7 +367,7 @@ export class InviteService {
                 : invite.role === RoleEnum.DRIVER ? PermissionEnum.EDIT_DRIVERS :
                 PermissionEnum.EDIT_PASSENGERS
 
-            if(await ManagerService.hasPermission({managerId:manager.id, permissionId:requiredPermission})) {
+            if(!(await ManagerService.hasPermission({managerId:manager.id, permissionId:requiredPermission}))) {
                 throw new AppError("Não possui permissão para cancelar este tipo de convite", 403)
             }
 

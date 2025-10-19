@@ -1,3 +1,4 @@
+import { Driver } from "@prisma/client";
 import prisma from "../../config/prisma";
 import { PointFlavorEnum, RoleEnum, StatusEnum, CardStatusEnum } from "../../types/enums";
 import { AppError } from "../utils/AppError";
@@ -68,6 +69,7 @@ interface GetDriversInterface {
     lineId: string;
     status?: string;
     name?: string;
+    withPending?: boolean;
 }
 
 interface GetPendingDriversInterface {
@@ -536,7 +538,7 @@ export class LineService {
         }
     }    
 
-    static async getDrivers ({lineId, name, status}: GetDriversInterface) {
+    static async getDrivers ({lineId, name, status, withPending}: GetDriversInterface) {
         try {
 
             if(status && !Helper.isValidStatus(status)) {
@@ -544,18 +546,65 @@ export class LineService {
             }
 
             const drivers = await prisma.driver.findMany({
+                select:{
+                    id:true, 
+                    userId:true,
+                    lineId:true, 
+                    status:true, 
+                    sharingLocation:true,
+                    user:{
+                        select:{
+                            name:true,
+                            lastName:true,
+                            phone:true,
+                            email:true
+                        }
+                    }
+                    
+                },
                 where:{
                     lineId,
                     ...(name && {name: {contains:name, mode:"insensitive"}}),
                     ...(status && {status}),
                 },
-                include:{
-                    user:{select:{
-                        name:true, lastName:true, phone:true
-                    }}
-                },
                 orderBy:{user:{name:"asc"}},
             })
+
+            if (withPending) {
+                const pendingDrivers = await prisma.invite.findMany({
+                    select:{
+                        id:true,
+                        invitorId:true,
+                        lineId:true,
+                        invitedEmail:true,
+                        createdAt:true,
+                        acceptedAt:true,
+                        declinedAt:true,
+                        userInvited:{select:{
+                            name:true, lastName:true, phone:true
+                        }}
+                    },
+                    where:{
+                        lineId,
+                        acceptedAt:null,
+                        role:RoleEnum.DRIVER,
+                        ...(name && 
+                            {OR:[
+                                {invitedEmail:{contains:name, mode:"insensitive"}},
+                                {userInvited:{
+                                    OR:[
+                                        {name:{contains:name, mode:"insensitive"}},
+                                        {lastName:{contains:name, mode:"insensitive"}}
+                                    ]
+                                }}
+                            ]}
+                        )
+                    },
+                    orderBy:{createdAt:"asc"},
+                })
+
+                return {drivers, pendingDrivers}
+            }
 
             return drivers;
         } catch (error: any) {
@@ -566,15 +615,22 @@ export class LineService {
     static async getPendingDrivers ({lineId}: GetPendingDriversInterface) {
         try {
             const pendingDrivers = await prisma.invite.findMany({
+                select:{
+                    id:true,
+                    invitorId:true,
+                    lineId:true,
+                    invitedEmail:true,
+                    createdAt:true,
+                    acceptedAt:true,
+                    declinedAt:true,
+                    userInvited:{select:{
+                        name:true, lastName:true, phone:true
+                    }}
+                },
                 where:{
                     lineId,
                     acceptedAt:null,
                     role:RoleEnum.DRIVER
-                },
-                include:{
-                    userInvited:{select:{
-                        name:true, lastName:true, phone:true
-                    }}
                 },
                 orderBy:{createdAt:"asc"},
             })

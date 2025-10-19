@@ -105,6 +105,9 @@ const routes: RouteDefinition[] = [
         method:'get',
         path:'/:id/drivers',
         middlewares:[requireAuth, requireManager],
+        queryParams:[
+            {name:"withPending", type:"boolean"},
+        ],
         controller:LineController.getDrivers,
     },
     {

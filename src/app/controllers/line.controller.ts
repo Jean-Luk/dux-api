@@ -107,7 +107,7 @@ export class LineController {
             const status = typeof req.query.status === 'string' ? req.query.status : undefined;
             const name = typeof req.query.name === 'string' ? req.query.name : undefined;
 
-            const result = await LineService.getDrivers({lineId, status, name});
+            const result = await LineService.getDrivers({lineId, status, name, ...req.parsedQuery});
 
             res.status(200).json(result);
         } catch (err) {
