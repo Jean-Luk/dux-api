@@ -161,8 +161,8 @@ model Point {
   lineId             String      @map("fk_line")
   address            String      @map("address") @db.VarChar
   sequencePosition   Int         @map("sequence_position")
-  latitude           Int         @map("latitude")
-  longitude          Int         @map("longitude")
+  latitude           Float       @map("latitude")
+  longitude          Float       @map("longitude")
   flavor             String      @map("flavor") @db.Char(2)
   boardingPassengers Passenger[] @relation("passenger_boarding")
   destinyPassengers  Passenger[] @relation("passenger_destiny")
