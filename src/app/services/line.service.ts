@@ -74,6 +74,7 @@ interface GetDriversInterface {
 
 interface GetPendingDriversInterface {
     lineId: string;
+    name?: string;
 }
 
 interface UpdateDriverInterface {
@@ -91,10 +92,12 @@ interface GetPassengersInterface {
     lineId: string;
     status?: string;
     name?: string;
+    withPending?: boolean;
 }
 
 interface GetPendingPassengersInterface {
     lineId: string;
+    name?: string;
 }
 
 interface UpdatePassengerInterface {
@@ -564,44 +567,19 @@ export class LineService {
                 },
                 where:{
                     lineId,
-                    ...(name && {name: {contains:name, mode:"insensitive"}}),
+                    ...(name && 
+                        {OR:[
+                            {user:{name: {contains:name, mode:"insensitive"}}},
+                            {user:{lastName: {contains:name, mode:"insensitive"}}},
+                        ]}
+                    ),
                     ...(status && {status}),
                 },
                 orderBy:{user:{name:"asc"}},
             })
 
             if (withPending) {
-                const pendingDrivers = await prisma.invite.findMany({
-                    select:{
-                        id:true,
-                        invitorId:true,
-                        lineId:true,
-                        invitedEmail:true,
-                        createdAt:true,
-                        acceptedAt:true,
-                        declinedAt:true,
-                        userInvited:{select:{
-                            name:true, lastName:true, phone:true
-                        }}
-                    },
-                    where:{
-                        lineId,
-                        acceptedAt:null,
-                        role:RoleEnum.DRIVER,
-                        ...(name && 
-                            {OR:[
-                                {invitedEmail:{contains:name, mode:"insensitive"}},
-                                {userInvited:{
-                                    OR:[
-                                        {name:{contains:name, mode:"insensitive"}},
-                                        {lastName:{contains:name, mode:"insensitive"}}
-                                    ]
-                                }}
-                            ]}
-                        )
-                    },
-                    orderBy:{createdAt:"asc"},
-                })
+                const pendingDrivers = await this.getPendingDrivers({lineId, name});
 
                 return {drivers, pendingDrivers}
             }
@@ -612,7 +590,7 @@ export class LineService {
         }
     }
 
-    static async getPendingDrivers ({lineId}: GetPendingDriversInterface) {
+    static async getPendingDrivers ({lineId, name}: GetPendingDriversInterface) {
         try {
             const pendingDrivers = await prisma.invite.findMany({
                 select:{
@@ -630,7 +608,18 @@ export class LineService {
                 where:{
                     lineId,
                     acceptedAt:null,
-                    role:RoleEnum.DRIVER
+                    role:RoleEnum.DRIVER,
+                    ...(name && 
+                        {OR:[
+                            {invitedEmail:{contains:name, mode:"insensitive"}},
+                            {userInvited:{
+                                OR:[
+                                    {name:{contains:name, mode:"insensitive"}},
+                                    {lastName:{contains:name, mode:"insensitive"}}
+                                ]
+                            }}
+                        ]}
+                    )
                 },
                 orderBy:{createdAt:"asc"},
             })
@@ -705,7 +694,7 @@ export class LineService {
         }
     }    
 
-    static async getPassengers ({lineId, name, status}: GetPassengersInterface) {
+    static async getPassengers ({lineId, name, status, withPending}: GetPassengersInterface) {
         try {
 
             if(status && !Helper.isValidStatus(status)) {
@@ -713,18 +702,39 @@ export class LineService {
             }
 
             const passengers = await prisma.passenger.findMany({
+                select:{
+                    id:true, 
+                    userId:true,
+                    lineId:true, 
+                    status:true, 
+                    user:{
+                        select:{
+                            name:true,
+                            lastName:true,
+                            phone:true,
+                            email:true
+                        }
+                    }
+                    
+                },
                 where:{
                     lineId,
-                    ...(name && {name: {contains:name, mode:"insensitive"}}),
+                    ...(name && 
+                        {OR:[
+                            {user:{name: {contains:name, mode:"insensitive"}}},
+                            {user:{lastName: {contains:name, mode:"insensitive"}}},
+                        ]}
+                    ),
                     ...(status && {status}),
-                },
-                include:{
-                    user:{select:{
-                        name:true, lastName:true, phone:true
-                    }}
                 },
                 orderBy:{user:{name:"asc"}},
             })
+
+            if (withPending) {
+                const pendingPassengers = await this.getPendingPassengers({lineId, name})
+
+                return {passengers, pendingPassengers}
+            }
 
             return passengers;
         } catch (error: any) {
@@ -732,18 +742,25 @@ export class LineService {
         }
     }
 
-    static async getPendingPassengers ({lineId}: GetPendingPassengersInterface) {
+    static async getPendingPassengers ({lineId, name}: GetPendingPassengersInterface) {
         try {
             const pendingPassengers = await prisma.invite.findMany({
+                select:{
+                    id:true,
+                    invitorId:true,
+                    lineId:true,
+                    invitedEmail:true,
+                    createdAt:true,
+                    acceptedAt:true,
+                    declinedAt:true,
+                    userInvited:{select:{
+                        name:true, lastName:true, phone:true
+                    }}
+                },
                 where:{
                     lineId,
                     acceptedAt:null,
                     role:RoleEnum.PASSENGER
-                },
-                include:{
-                    userInvited:{select:{
-                        name:true, lastName:true, phone:true
-                    }}
                 },
                 orderBy:{createdAt:"asc"},
             })

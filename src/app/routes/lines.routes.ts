@@ -107,12 +107,17 @@ const routes: RouteDefinition[] = [
         middlewares:[requireAuth, requireManager],
         queryParams:[
             {name:"withPending", type:"boolean"},
+            {name:"status", type:"string"},
+            {name:"name", type:"string"}
         ],
         controller:LineController.getDrivers,
     },
     {
         method:'get',
         path:'/:id/pendingDrivers',
+        queryParams:[
+            {name:"name", type:"string"}
+        ],
         middlewares:[requireAuth, requireManager],
         controller:LineController.getPendingDrivers,
     },
@@ -136,12 +141,20 @@ const routes: RouteDefinition[] = [
     {
         method:'get',
         path:'/:id/passengers',
+        queryParams:[
+            {name:"withPending", type:"boolean"},
+            {name:"status", type:"string"},
+            {name:"name", type:"string"}
+        ],
         middlewares:[requireAuth, requireManager],
         controller:LineController.getPassengers,
     },
     {
         method:'get',
         path:'/:id/pendingPassengers',
+        queryParams:[
+            {name:"name", type:"string"}
+        ],
         middlewares:[requireAuth, requireManager],
         controller:LineController.getPendingPassengers,
     },
