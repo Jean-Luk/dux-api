@@ -114,7 +114,7 @@ model Passenger {
   boardingPointId Int?                @map("fk_boarding_point")
   destinyPointId  Int?                @map("fk_destiny_point")
   dropoffPointId  Int?                @map("fk_dropoff_point")
-  card_status     String?             @map("card_status") @db.Char(1)
+  cardStatus     String?             @map("card_status") @db.Char(1)
   boardingPoint   Point?              @relation("passenger_boarding", fields: [boardingPointId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "passenger_boarding")
   destinyPoint    Point?              @relation("passenger_destiny", fields: [destinyPointId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "passenger_destiny")
   dropoffPoint    Point?              @relation("passenger_dropoff", fields: [dropoffPointId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "passenger_dropoff")
@@ -123,18 +123,21 @@ model Passenger {
   checkins        PassengerCheckin[]
   documents       PassengerDocument[]
 
+  @@unique([userId, lineId])
   @@map("passenger")
 }
 
 model PassengerCheckin {
-  id          Int       @id @default(autoincrement()) @map("pk_checkin")
-  lineId      String    @map("fk_line")
-  passengerId Int       @map("fk_passenger")
-  checkinDate DateTime  @map("checkin_date") @db.Date
-  checked     Boolean?  @default(true) @map("checked")
-  passenger   Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_checkin")
-  line        Line      @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_checkin_line")
+  id               Int       @id @default(autoincrement()) @map("pk_checkin")
+  lineId           String    @map("fk_line")
+  passengerId      Int       @map("fk_passenger")
+  checkinDate      DateTime  @map("checkin_date") @db.Date
+  checkinTimestamp DateTime  @map("checkin_timestamp") @db.Timestamp(6) @default(now())
+  checked          Boolean?  @default(true) @map("checked")
+  passenger        Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_checkin")
+  line             Line      @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_checkin_line")
 
+  @@unique([lineId, passengerId, checkinDate])
   @@map("passenger_checkin")
 }
 
