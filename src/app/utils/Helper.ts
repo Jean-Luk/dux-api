@@ -113,4 +113,12 @@ export class Helper {
         return Object.values(e as any).filter(v => typeof(v) === "number") as any;
     }
 
+    static cookieStringToObject (cookieString: string) {
+        return Object.fromEntries(
+            cookieString
+                .split(";")
+                .map(cookie => cookie.trim())
+                .map(cookie => cookie.split("="))
+        )
+    }
 }
