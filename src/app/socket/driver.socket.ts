@@ -100,9 +100,10 @@ export default function setupDriverEvents (socket: Socket) {
 
     })
 
-    socket.on("updateDriverLocation", (latitude, longitude) => {
+    socket.on("updateDriverLocation", (coords) => {
         try {
-            console.log("Recebeu coordenadas: ", latitude, longitude)
+            const latitude = coords.latitude
+            const longitude = coords.longi
             // Valida se as coordenadas passadas são válidas
             if(!Helper.isValidCoordinates(latitude, longitude)) {
                 throw new SocketError("Coordenadas inválidas")

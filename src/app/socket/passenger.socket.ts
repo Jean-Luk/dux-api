@@ -1,6 +1,4 @@
-import { Server, Socket } from "socket.io";
-import { DriverService } from "../services/driver.service";
-import { PassengerService } from "../services/passenger.service";
+import { Socket } from "socket.io";
 import { LineService } from "../services/line.service";
 import { SocketError } from "../utils/SocketError";
 

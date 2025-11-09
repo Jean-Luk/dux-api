@@ -5,6 +5,7 @@ import { Helper } from "../utils/Helper";
 import prisma from "../../config/prisma";
 import { DriverService } from "../services/driver.service";
 import setupDriverEvents from "./driver.socket";
+import setupPassengerEvents from "./passenger.socket";
 
 let io: Server
 
@@ -58,6 +59,7 @@ export function initSocket (server: any) {
 
         // Inicializar callbacks dos motoristas
         setupDriverEvents(socket);
+        setupPassengerEvents(socket);
         
     })
 }
