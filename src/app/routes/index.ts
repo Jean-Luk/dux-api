@@ -18,6 +18,11 @@ for (const file of routeFiles) {
 	const routeModule = require(file);
 	const routes = routeModule.default;
 
+	// No build do projeto, há outros arquivos dentro da pasta, o que pode ocasionar em erros
+	if (!Array.isArray(routes) || !routes[0].method) {
+        continue;
+    }
+
 	const fileName = path.basename(file);
 	const prefix = '/' + fileName.split('.')[0];
 
