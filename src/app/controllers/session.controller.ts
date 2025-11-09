@@ -8,8 +8,8 @@ export class SessionController {
 
             res.status(200).cookie('dux_auth_token', result.authToken, {
                 httpOnly: true,
-                secure: process.env.ENVIRONMENT === "PROD",
-                sameSite: 'strict',
+                secure: true,
+                sameSite: 'none',
                 maxAge: 1000 * 60 * 60 * 24 // 1 dia
             }).end();
 
