@@ -888,7 +888,7 @@ export class LineService {
                 where:{
                     // Busca apenas na linha com o ID passado
                     id:lineId,
-                    // Valida se o motorista existe e está compartilhando localização
+                    // Valida se o motorista existe
                     drivers:{
                         some:{
                             id:driverId,

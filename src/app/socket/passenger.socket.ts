@@ -27,7 +27,8 @@ export default function setupPassengerEvents (socket: Socket) {
                 throw new SocketError("Este motorista não está mais compartilhando localização")
             }
 
-            socket.rooms.add(`${lineId}-${driver.userId}`);
+            console.log(`Entrou na sala ${lineId}-${driver.userId}`)
+            socket.join(`${lineId}-${driver.userId}`);
 
         } catch (error: any) {
             socket.emit("error", error.message || "Erro interno ao acompanhar motorista");

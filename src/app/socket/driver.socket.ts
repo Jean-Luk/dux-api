@@ -119,14 +119,10 @@ export default function setupDriverEvents (socket: Socket) {
             driver.longitude = longitude;
             driver.timestamp = Date.now();
 
-            console.log("Recebeu posição do motorista: ")
-            console.log(`Latitude: ${driver.latitude}`)
-            console.log(`Longitude: ${driver.longitude}`)
-            console.log(`Horário: ${driver.timestamp}`)
-
             // Percorre a lista de linhas que o motorista está compartilhando a localização
             for (const lineId of driver.lines) {
                 // Emite para os passageiros que estejam "assistindo" a localização
+                console.log(`Compartilhando para ${lineId}-${userId}`)
                 socket.to(`${lineId}-${userId}`).emit("updatedDriverLocation", {latitude, longitude, timestamp:driver.timestamp})
             }
 
