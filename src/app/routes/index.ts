@@ -21,6 +21,12 @@ for (const file of routeFiles) {
 	const fileName = path.basename(file);
 	const prefix = '/' + fileName.split('.')[0];
 
+	// Verifica se é um arquivo válido de rotas:
+	// (No build do projeto, há outros arquivos dentro da pasta que entram na busca mas não são válidos)
+	if (!Array.isArray(routes) || !routes[0].method) {
+        continue;
+    }
+
 	for(const route of routes as RouteDefinition[]) {
 		const { method, path, controller, middlewares=[], body, queryParams, requiredPermissions } = route;
 
