@@ -111,7 +111,11 @@ interface DeletePassengerInterface {
     lineId: string;
     passengerId: number;
 }
-
+interface GetDriverIfSharingInterface {
+    lineId: string;
+    driverId: number;
+    passengerUserId: string;
+}
 export class LineService {
     static async list ({page=1, limit=10, orderField='name', orderDirection='asc', status, name=""}: ListInterface) {
         try {
@@ -877,4 +881,40 @@ export class LineService {
             throw new AppError("Posição inválida: a sequência deste ponto está incorreta", 400);
         }
     }
+
+    static async getDriverIfPassengerAuthorized ({lineId, driverId, passengerUserId}: GetDriverIfSharingInterface) {
+        try {
+            const driver = await prisma.line.findFirst({
+                where:{
+                    // Busca apenas na linha com o ID passado
+                    id:lineId,
+                    // Valida se o motorista existe
+                    drivers:{
+                        some:{
+                            id:driverId,
+                        }
+                    },
+                    // Valida se o usuário é passageiro da linha
+                    passengers:{
+                        some:{
+                            userId:passengerUserId
+                        }
+                    }
+                },
+                select:{
+                    drivers:{
+                        select:{
+                            userId:true,
+                            sharingLocation:true
+                        }
+                    }
+                }
+            })
+
+            return driver?.drivers[0] ?? null;
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao buscar motorista', error.statusCode || 500);
+        }
+    }
+
 }

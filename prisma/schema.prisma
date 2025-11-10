@@ -30,6 +30,7 @@ model Driver {
   line            Line     @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "driver_line")
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "driver_user")
 
+  @@unique([userId, lineId])
   @@map("driver")
 }
 

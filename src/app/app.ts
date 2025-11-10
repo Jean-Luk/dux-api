@@ -5,8 +5,8 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { AppError } from './utils/AppError';
 
-const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [];
-const isDev = process.env.ENVIRONMENT !== 'PROD';
+export const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [];
+export const isDev = process.env.ENVIRONMENT !== 'PROD';
 
 const app = express();
 

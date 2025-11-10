@@ -30,6 +30,20 @@ interface GetLineInfoInterface {
     lineId: string;
     user: RequestUser;
 }
+
+interface IsDriverFromLineInterface {
+    lineId: string;
+    userId: string;
+}
+interface StartSharingLocationInterface {
+    lineId: string;
+    userId: string;
+}
+interface StopSharingLocationInterface {
+    lineId?: string;
+    userId: string;
+}
+
 export class DriverService {
     static async create ({user, lineId}: CreateInterface, prismaClient : Prisma.TransactionClient = prisma): Promise<Manager> {
         try {
@@ -229,6 +243,68 @@ export class DriverService {
 
         } catch (error: any) {
             throw new AppError(error.message || 'Erro interno ao buscar informações da linha do motorista', error.statusCode || 500);
+        }
+    }
+
+    static async isDriverFromLine ({userId, lineId}: IsDriverFromLineInterface) {
+        try {
+            const isDriver = await prisma.driver.findFirst({
+                where:{
+                    lineId,
+                    userId
+                },
+                select:{
+                    sharingLocation:true
+                }
+            })
+
+            return isDriver ?? false;
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao verificar motorista da linha', error.statusCode || 500);
+        }
+    }
+
+    static async startSharingLocation ({userId, lineId}: StartSharingLocationInterface) {
+        try {
+            await prisma.driver.update({
+                where:{
+                    userId_lineId:{
+                        lineId,
+                        userId
+                    }
+                },
+                data:{
+                    sharingLocation:true
+                }
+            })
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao iniciar compartilhamento de localização do motorista', error.statusCode || 500);
+        }
+    }
+    
+    static async stopSharingLocation ({userId, lineId}: StopSharingLocationInterface) {
+        try {
+
+            const where = lineId ? {
+                // Caso tenha sido especificada uma linha, atualiza apenas ela
+                lineId,
+                userId
+            } : {
+                // Do contrário, atualiza todas as linhas
+                userId
+            }
+
+            await prisma.driver.updateMany({
+                where,
+                data:{
+                    sharingLocation:false
+                }
+            })
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao parar compartilhamento de localização do motorista', error.statusCode || 500);
         }
     }
 }
