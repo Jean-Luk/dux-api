@@ -104,10 +104,7 @@ export class LineController {
         try {
             const lineId = req.params.id;
 
-            const status = typeof req.query.status === 'string' ? req.query.status : undefined;
-            const name = typeof req.query.name === 'string' ? req.query.name : undefined;
-
-            const result = await LineService.getDrivers({lineId, status, name, ...req.parsedQuery});
+            const result = await LineService.getDrivers({lineId, ...req.parsedQuery});
 
             res.status(200).json(result);
         } catch (err) {
@@ -153,10 +150,7 @@ export class LineController {
         try {
             const lineId = req.params.id;
 
-            const status = typeof req.query.status === 'string' ? req.query.status : undefined;
-            const name = typeof req.query.name === 'string' ? req.query.name : undefined;
-
-            const result = await LineService.getPassengers({lineId, status, name});
+            const result = await LineService.getPassengers({lineId, ...req.parsedQuery});
 
             res.status(200).json(result);
         } catch (err) {

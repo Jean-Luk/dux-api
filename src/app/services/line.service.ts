@@ -708,9 +708,8 @@ export class LineService {
             const passengers = await prisma.passenger.findMany({
                 select:{
                     id:true, 
-                    userId:true,
-                    lineId:true, 
                     status:true, 
+                    cardStatus:true,
                     user:{
                         select:{
                             name:true,
@@ -718,8 +717,7 @@ export class LineService {
                             phone:true,
                             email:true
                         }
-                    }
-                    
+                    }                    
                 },
                 where:{
                     lineId,
