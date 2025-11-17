@@ -38,6 +38,19 @@ export class ManagerController {
         }
     }
 
+    static async putPermissions(req: Request, res: Response, next: NextFunction) {
+        try {
+            // TODO: Adicionar middleware de validação dos params da url
+            const updatedManagerId = isNaN(Number(req.params.id)) ? -1 : Number(req.params.id);
+
+            const result = await ManagerService.putPermissions({managerId:req.user!.manager!.id, updatedManagerId, ...req.body});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
     static async list(req: Request, res: Response, next: NextFunction) {
         try {
             const result = await ManagerService.list(req.parsedQuery!);

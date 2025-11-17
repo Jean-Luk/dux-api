@@ -31,6 +31,16 @@ const routes: RouteDefinition[] = [
         ]
     },
     {
+        method:'put',
+        path:'/:id/permissions',
+        middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.EDIT_PERMISSIONS],
+        controller:ManagerController.putPermissions,
+        body:[
+            {name:"permissions", type:"array", possibleValues:Helper.getEnumValues(PermissionEnum), required:true}
+        ]
+    },
+    {
         method:'get',
         path:'/list',
         middlewares:[requireAuth, requireManager],

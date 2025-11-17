@@ -1,7 +1,7 @@
 import { Manager, Prisma, User } from '@prisma/client';
 import prisma from '../../config/prisma';
 import { AppError } from '../utils/AppError';
-import { PermissionEnum } from '../../types/enums';
+import { PermissionEnum, RoleEnum } from '../../types/enums';
 
 interface CreateInterface {
     user: User;
@@ -30,6 +30,11 @@ interface PatchPermissionsInterface {
     updatedManagerId: number;
     toRemove?: PermissionEnum[];
     toAdd?: PermissionEnum[];
+}
+interface PutPermissionsInterface {
+    managerId: number;
+    updatedManagerId: number;
+    permissions: PermissionEnum[];
 }
 
 interface ListInterface {
@@ -182,6 +187,62 @@ export class ManagerService {
                     }
                 })
             }
+            // Roda um updatemany caso possuam permissões para desativar
+            if (toRemove && toRemove.length > 0) {
+                await prisma.managerPermission.updateMany({
+                    where:{
+                        managerId:updatedManagerId,
+                        permissionId: { in: toRemove.filter(p => currentPermissions.includes(p))}
+                    },
+                    data:{
+                        active:false
+                    }
+                })
+            }
+            
+            const updatedPermissions = await this.getPermissions({managerId:updatedManagerId});
+            return updatedPermissions
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao atualizar permissões', error.statusCode || 500);
+        }
+    }
+
+    static async putPermissions({managerId, updatedManagerId, permissions}: PutPermissionsInterface) {
+        try {
+            // Verifica se está tentando atualizar as próprias permissões
+            if(managerId === updatedManagerId) {
+                throw new AppError("Não é possível atualizar as próprias permissões", 422);
+            }
+
+            // Verifica se manager especificado existe
+            const updatedManager = await prisma.manager.findUnique({
+                where:{id:updatedManagerId}
+            })
+
+            if(!updatedManager) {
+                throw new AppError("Gestor inexistente", 404)
+            }
+
+            // Busca as permissões atuais:
+            const currentPermissions = await this.getPermissions({managerId:updatedManagerId});
+
+            const toAdd = permissions.filter((p) => !currentPermissions.includes(p));
+            const toRemove = currentPermissions.filter((p) => !permissions.includes(p));
+
+            // Roda um updatemany caso possuam permissões para ativar
+            if (toAdd && toAdd.length > 0) {
+                await prisma.managerPermission.updateMany({
+                    where:{
+                        managerId:updatedManagerId,
+                        permissionId: { in: toAdd.filter(p => !currentPermissions.includes(p))}
+                    },
+                    data:{
+                        active:true
+                    }
+                })
+            }
+
             // Roda um updatemany caso possuam permissões para desativar
             if (toRemove && toRemove.length > 0) {
                 await prisma.managerPermission.updateMany({
