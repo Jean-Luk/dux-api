@@ -38,6 +38,10 @@ interface ListInterface {
     orderField?: "name"|"phone"|"email";
     orderDirection?: "asc"|"desc";
     name?: string;
+    withPending?: boolean;
+}
+interface GetPendingManagersInterface {
+    name?: string;
 }
 
 interface GetInfoInterface {
@@ -199,7 +203,7 @@ export class ManagerService {
         }
     }
 
-    static async list({page=1, limit=10, orderField='name', orderDirection='asc', name}: ListInterface) {
+    static async list({page=1, limit=10, orderField='name', orderDirection='asc', name, withPending=false}: ListInterface) {
         try {
 
             if(page < 1 || limit < 1) {
@@ -233,6 +237,11 @@ export class ManagerService {
                     }
                 }
             })
+
+            if (withPending) {
+                const pendingManagers = await this.getPendingManagers({name});
+                return { managers, pendingManagers}
+            }
 
             return managers;
             
@@ -274,7 +283,35 @@ export class ManagerService {
             };
 
         } catch (error: any) {
-            throw new AppError(error.message || 'Erro interno ao buscar linha', error.statusCode || 500);
+            throw new AppError(error.message || 'Erro interno ao buscar gestor', error.statusCode || 500);
+        }
+    }
+
+    static async getPendingManagers ({name}: GetPendingManagersInterface) {
+        try {
+            const pendingmanagers = await prisma.invite.findMany({
+                select:{
+                    id:true,
+                    invitorId:true,
+                    lineId:true,
+                    invitedEmail:true,
+                    createdAt:true,
+                    acceptedAt:true,
+                    declinedAt:true,
+                    userInvited:{select:{
+                        name:true, lastName:true, phone:true
+                    }}
+                },
+                where:{
+                    acceptedAt:null,
+                    role:RoleEnum.MANAGER
+                },
+                orderBy:{createdAt:"asc"},
+            })
+
+            return pendingmanagers;
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao listar gestores pendentes', error.statusCode || 500);
         }
     }
 

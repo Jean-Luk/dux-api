@@ -43,6 +43,7 @@ const routes: RouteDefinition[] = [
             {name:"orderDirection", type:"string", possibleValues:["asc", "desc"]},
             {name:"name", type:"string"},
             {name:"email", type:"string"},
+            {name:"withPending", type:"boolean"},
             {name:"phone", type:"string"}
         ]
     },
