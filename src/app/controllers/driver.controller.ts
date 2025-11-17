@@ -23,4 +23,16 @@ export class DriverController {
             next(err);
         }
     }
+
+    static async getLinePointCheckins (req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.lineId;
+
+            const result = await DriverService.getLinePointCheckins({lineId, user:req.user!});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
 }

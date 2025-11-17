@@ -25,6 +25,12 @@ const routes: RouteDefinition[] = [
         middlewares:[requireAuth, requireDriver],
         controller:DriverController.getLineInfo,
     },
+    {
+        method:'get',
+        path:'/lines/:lineId/points/checkins',
+        middlewares:[requireAuth, requireDriver],
+        controller:DriverController.getLinePointCheckins
+    }
 ]
 
 export default routes;

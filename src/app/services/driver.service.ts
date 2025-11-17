@@ -43,7 +43,10 @@ interface StopSharingLocationInterface {
     lineId?: string;
     userId: string;
 }
-
+interface GetLinePointCheckinsInterface {
+    user: User;
+    lineId: string;
+}
 export class DriverService {
     static async create ({user, lineId}: CreateInterface, prismaClient : Prisma.TransactionClient = prisma): Promise<Manager> {
         try {
@@ -305,6 +308,104 @@ export class DriverService {
 
         } catch (error: any) {
             throw new AppError(error.message || 'Erro interno ao parar compartilhamento de localização do motorista', error.statusCode || 500);
+        }
+    }
+
+    static async getLinePointCheckins ({user, lineId}: GetLinePointCheckinsInterface) {
+        try {
+            const today = new Date();
+
+            const passengersSelect = 
+            {
+                select:{
+                    user:{
+                        select:{
+                            name:true,
+                        }
+                    },
+                    checkins:{
+                        select:{
+                            checkinTimestamp:true
+                        },
+                        where:{
+                            checked:true,
+                            checkinDate:today
+                        }
+                    }
+                },
+                where:{
+                    checkins:{
+                        some:{
+                            checked:true,
+                            checkinDate:today
+                        }
+                    }
+                }
+            }
+
+            const points = await prisma.point.findMany({
+                select:{
+                    // Informações do ponto
+                    id:true,
+                    address:true,
+                    flavor:true,
+                    latitude:true,
+                    longitude:true,
+                    sequencePosition:true,
+                    // Informações da linha
+                    line:{
+                        select:{
+                            name:true
+                        }
+                    },
+                    // Passageiros que fizeram check-in
+                    boardingPassengers:passengersSelect,
+                    destinyPassengers:passengersSelect,
+                    dropoffPassengers:passengersSelect
+                },
+                where:{
+                    lineId,
+                    // Buscar apenas caso o usuário seja motorista da linha
+                    line:{
+                        drivers:{
+                            some:{
+                                userId:user.id
+                            }
+                        },
+                        active:true
+                    }
+                },
+                orderBy:{
+                    sequencePosition:"asc"
+                }
+            })
+
+            const mapPassenger = function (passenger:{
+                user: {name: string;};
+                checkins: {checkinTimestamp: Date;}[];
+            }) {
+                return {
+                    name:passenger.user.name,
+                    checkinTimestamp: passenger.checkins[0].checkinTimestamp
+                }
+            }
+            // Juntar todos os passageiros em 1 array
+            const result = points.map((point) => {
+                return {
+                    ...point,
+                    passengers:[
+                        ...point.boardingPassengers.map(mapPassenger), ...point.destinyPassengers.map(mapPassenger), ...point.dropoffPassengers.map(mapPassenger)
+                    ],
+                    boardingPassengers:undefined,
+                    destinyPassengers:undefined,
+                    dropoffPassengers:undefined
+                }
+            })
+
+            return result;
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao buscar pontos com check-in', error.statusCode || 500);
         }
     }
 }

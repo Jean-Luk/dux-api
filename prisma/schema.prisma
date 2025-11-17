@@ -115,7 +115,7 @@ model Passenger {
   boardingPointId Int?                @map("fk_boarding_point")
   destinyPointId  Int?                @map("fk_destiny_point")
   dropoffPointId  Int?                @map("fk_dropoff_point")
-  cardStatus     String?             @map("card_status") @db.Char(1)
+  cardStatus      String?             @map("card_status") @db.Char(1)
   boardingPoint   Point?              @relation("passenger_boarding", fields: [boardingPointId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "passenger_boarding")
   destinyPoint    Point?              @relation("passenger_destiny", fields: [destinyPointId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "passenger_destiny")
   dropoffPoint    Point?              @relation("passenger_dropoff", fields: [dropoffPointId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "passenger_dropoff")
