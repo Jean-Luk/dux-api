@@ -14,7 +14,7 @@ export class PassengerController {
     
     static async updateCheckinPoints (req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
 
             const result = await PassengerService.updateCheckinPoints({user:req.user!, lineId, ...req.body});
 
@@ -26,7 +26,7 @@ export class PassengerController {
 
     static async getLineInfo (req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
 
             const result = await PassengerService.getLineInfo({lineId, user:req.user!});
 
@@ -38,7 +38,7 @@ export class PassengerController {
 
     static async putCheckin (req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
 
             const result = await PassengerService.putCheckin({lineId, user:req.user!, ...req.body});
 
@@ -50,9 +50,43 @@ export class PassengerController {
 
     static async getCardInfo (req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
 
             const result = await PassengerService.getCardInfo({lineId, user:req.user!});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async getPassengerLineDocuments (req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.lineid;
+
+            const result = await PassengerService.getPassengerLineDocuments({lineId, user:req.user!});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async getPassengerDocuments (req: Request, res: Response, next: NextFunction) {
+        try {
+            const result = await PassengerService.getPassengerDocuments({user:req.user!});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async getPassengerDocument (req: Request, res: Response, next: NextFunction) {
+        try {
+            const documentId = Number(req.params.documentid);
+
+            const result = await PassengerService.getPassengerDocument({documentId, user:req.user!});
 
             res.status(200).json(result);
         } catch (err) {

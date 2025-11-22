@@ -24,7 +24,7 @@ export class LineController {
 
     static async getInfo(req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
             const result = await LineService.getInfo({lineId});
 
             res.status(200).json(result);
@@ -35,7 +35,7 @@ export class LineController {
 
     static async update(req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
             const result = await LineService.update({lineId, ...req.body});
 
             res.status(200).json(result);
@@ -46,7 +46,7 @@ export class LineController {
 
     static async delete(req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
             await LineService.delete({lineId});
 
             res.status(204).send();
@@ -58,7 +58,7 @@ export class LineController {
     /** Points functions: */
     static async getPoints(req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
             const result = await LineService.getPoints({lineId});
 
             res.status(200).json(result);
@@ -68,7 +68,7 @@ export class LineController {
     }
     static async createPoint(req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
             const result = await LineService.createPoint({lineId, ...req.body});
 
             res.status(200).json(result);
@@ -102,7 +102,7 @@ export class LineController {
     /** Drivers functions */
     static async getDrivers(req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
 
             const result = await LineService.getDrivers({lineId, ...req.parsedQuery});
 
@@ -113,7 +113,7 @@ export class LineController {
     }
     static async getPendingDrivers(req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
 
             const result = await LineService.getPendingDrivers({lineId});
 
@@ -148,7 +148,7 @@ export class LineController {
     /** Passengers functions */
     static async getPassengers(req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
 
             const result = await LineService.getPassengers({lineId, ...req.parsedQuery});
 
@@ -157,9 +157,10 @@ export class LineController {
             next(err);
         }
     }
+
     static async getPendingPassengers(req: Request, res: Response, next: NextFunction) {
         try {
-            const lineId = req.params.id;
+            const lineId = req.params.lineid;
 
             const result = await LineService.getPendingPassengers({lineId});
 
@@ -168,6 +169,7 @@ export class LineController {
             next(err);
         }
     }
+
     static async updatePassenger(req: Request, res: Response, next: NextFunction) {
         try {
             const lineId = req.params.lineid;
@@ -179,6 +181,7 @@ export class LineController {
             next(err);
         }
     }
+
     static async deletePassenger(req: Request, res: Response, next: NextFunction) {
         try {
             const lineId = req.params.lineid;
@@ -186,6 +189,55 @@ export class LineController {
             await LineService.deletePassenger({lineId, passengerId});
 
             res.status(204).send();            
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    /** Document Functions */
+    static async postPassengerDocument(req: Request, res: Response, next: NextFunction) {
+        try {
+            const passengerId = Number(req.params.passengerid);
+
+            const result = await LineService.postPassengerDocument({ file:req.file, passengerId, ...req.body });
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async getPassengerDocument(req: Request, res: Response, next: NextFunction) {
+        try {
+            const documentId = Number(req.params.documentid);
+
+            const result = await LineService.getPassengerDocument({ documentId });
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async deletePassengerDocument(req: Request, res: Response, next: NextFunction) {
+        try {
+            const documentId = Number(req.params.documentid);
+
+            const result = await LineService.deletePassengerDocument({ documentId });
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async getPassengerDocuments(req: Request, res: Response, next: NextFunction) {
+        try {
+            const passengerId = Number(req.params.passengerid);
+
+            const result = await LineService.getPassengerDocuments({ passengerId });
+
+            res.status(200).json(result);
         } catch (err) {
             next(err);
         }

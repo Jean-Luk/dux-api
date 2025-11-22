@@ -33,13 +33,13 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'get',
-        path:'/line/:id',
+        path:'/line/:lineid',
         middlewares:[requireAuth, requirePassenger],
         controller:PassengerController.getLineInfo,
     },
     {
         method:'put',
-        path:'/line/:id/checkin',
+        path:'/line/:lineid/checkin',
         middlewares:[requireAuth, requirePassenger],
         controller:PassengerController.putCheckin,
         body: [
@@ -48,7 +48,7 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'patch',
-        path:'/line/:id/checkinPoints',
+        path:'/line/:lineid/checkinPoints',
         middlewares:[requireAuth, requirePassenger],
         controller:PassengerController.updateCheckinPoints,
         body: [
@@ -59,9 +59,27 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'get',
-        path:'/line/:id/card',
+        path:'/line/:lineid/card',
         middlewares:[requireAuth, requirePassenger],
         controller:PassengerController.getCardInfo
+    },
+    {
+        method:'get',
+        path:'/line/:lineid/documents',
+        middlewares:[requireAuth, requirePassenger],
+        controller:PassengerController.getPassengerLineDocuments
+    },
+    {
+        method:'get',
+        path:'/documents',
+        middlewares:[requireAuth, requirePassenger],
+        controller:PassengerController.getPassengerDocuments
+    },
+    {
+        method:'get',
+        path:'/document/:documentid',
+        middlewares:[requireAuth, requirePassenger],
+        controller:PassengerController.getPassengerDocument
     },
 ]
 

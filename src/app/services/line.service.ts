@@ -1,8 +1,9 @@
-import { Driver } from "@prisma/client";
+import { randomUUID } from "crypto";
 import prisma from "../../config/prisma";
 import { PointFlavorEnum, RoleEnum, StatusEnum, CardStatusEnum } from "../../types/enums";
 import { AppError } from "../utils/AppError";
 import { Helper } from "../utils/Helper";
+import { supabase } from "../../config/supabase";
 
 interface ListInterface {
     page?: number;
@@ -115,6 +116,19 @@ interface GetDriverIfSharingInterface {
     lineId: string;
     driverId: number;
     passengerUserId: string;
+}interface PostPassengerDocumentInterface {
+    title: string;
+    passengerId: number;
+    file?: Express.Multer.File;
+}
+interface GetPassengerDocumentInterface {
+    documentId: number;
+}
+interface DeletePassengerDocumentInterface {
+    documentId: number;
+}
+interface GetPassengerDocumentsInterface {
+    passengerId: number;
 }
 export class LineService {
     static async list ({page=1, limit=10, orderField='name', orderDirection='asc', status, name=""}: ListInterface) {
@@ -915,4 +929,151 @@ export class LineService {
         }
     }
 
+    static async postPassengerDocument ({title, passengerId, file}: PostPassengerDocumentInterface) {
+        try {
+            if (!file) {
+                throw new AppError("Erro ao fazer upload. Arquivo não encontrado.", 400);
+            }
+            if (!title) {
+                throw new AppError("Erro ao fazer upload. Título não foi especificado.", 400);
+            }
+
+            const passenger = await prisma.passenger.findFirst({
+                where:{
+                    id:passengerId
+                },
+                select:{
+                    id:true
+                }
+            })
+
+            if (!passenger) {
+                throw new AppError("Passageiro não encontrado ou não existe.", 400);
+            }
+
+            const fileName = `${randomUUID()}.pdf`
+            const {data, error} = await supabase.storage
+                .from("dux-passenger-documents")
+                .upload(fileName, file.buffer, {
+                    contentType: file.mimetype,
+                    upsert: false
+                })
+
+            if (error) {
+                throw new AppError("Erro ao fazer upload. Tente novamente mais tarde.");
+            }
+
+            const fileType = file.mimetype;
+
+            const document = await prisma.passengerDocument.create({
+                data:{
+                    documentTitle:title,
+                    fileName,
+                    fileType,
+                    passengerId:passenger.id
+                },
+                select:{
+                    id:true,
+                    documentTitle:true,
+                    fileType:true
+                }
+            })
+
+            return document
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao inserir documento', error.statusCode || 500);
+        }
+    }
+
+    static async getPassengerDocument ({ documentId }: GetPassengerDocumentInterface) {
+        try {
+            const document = await prisma.passengerDocument.findUnique({
+                where:{
+                    id:documentId
+                },
+                select:{
+                    fileName:true,
+                    documentTitle:true,
+                    fileType:true,
+                    id:true
+                }
+            });
+
+            if (!document) {
+                throw new AppError("Documento inexistente", 400);
+            };
+
+            const { data, error } = await supabase.storage
+                .from("dux-passenger-documents")
+                .createSignedUrl(document.fileName, 60 * 2);
+
+            if (error) {
+                throw new AppError("Erro ao recuperar arquivo. Tente novamente mais tarde.");
+            }
+
+            return {
+                ...document,
+                url:data.signedUrl
+            }
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao recuperar documento', error.statusCode || 500);
+        }
+    }
+
+    static async getPassengerDocuments ({ passengerId }: GetPassengerDocumentsInterface) {
+        try {
+            const documents = await prisma.passengerDocument.findMany({
+                where:{
+                    passengerId
+                },
+                select:{
+                    id:true,
+                    documentTitle:true,
+                    fileType:true
+                }
+            });
+
+            return documents
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao recuperar documento', error.statusCode || 500);
+        }
+    }
+
+    static async deletePassengerDocument ({ documentId }: DeletePassengerDocumentInterface) {
+        try {
+            const document = await prisma.passengerDocument.findUnique({
+                where:{
+                    id:documentId
+                },
+                select:{
+                    fileName:true,
+                    id:true
+                }
+            });
+
+            if (!document) {
+                throw new AppError("Documento inexistente", 400);
+            };
+
+            const { data, error } = await supabase.storage
+                .from("dux-passenger-documents")
+                .remove([document.fileName])
+
+            if (error) {
+                throw new AppError("Erro ao excluir arquivo. Tente novamente mais tarde.");
+            }
+
+            await prisma.passengerDocument.delete({
+                where:{
+                    id:document.id
+                }
+            })
+
+            return true
+
+        } catch (error: any) {
+            throw new AppError(error.message || 'Erro interno ao recuperar documento', error.statusCode || 500);
+        }
+    }
 }

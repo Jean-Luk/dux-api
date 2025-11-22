@@ -143,10 +143,12 @@ model PassengerCheckin {
 }
 
 model PassengerDocument {
-  id          Int       @id @default(autoincrement()) @map("pk_document")
-  passengerId Int       @map("fk_passenger")
-  document    Bytes     @map("document")
-  passenger   Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_document")
+  id            Int       @id @default(autoincrement()) @map("pk_document")
+  passengerId   Int       @map("fk_passenger")
+  fileName      String    @map("file_name") @db.VarChar
+  documentTitle String    @map("title") @db.VarChar
+  fileType      String    @map("file_type") @db.VarChar
+  passenger     Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "passenger_document")
 
   @@map("passenger_document")
 }

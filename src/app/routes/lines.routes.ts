@@ -3,6 +3,7 @@ import { LineController } from '../controllers/line.controller';
 import { PermissionEnum, PointFlavorEnum, StatusEnum, CardStatusEnum } from '../../types/enums';
 import { requireAuth } from '../middlewares/requireAuth';
 import { requireManager } from '../middlewares/requireManager';
+import { handleFileUpload } from '../middlewares/handleFileUpload';
 
 
 const routes: RouteDefinition[] = [
@@ -22,7 +23,7 @@ const routes: RouteDefinition[] = [
     },    
     {
         method:'get',
-        path:'/:id',
+        path:'/:lineid',
         middlewares:[requireAuth, requireManager],
         controller:LineController.getInfo,
     },
@@ -41,7 +42,7 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'patch',
-        path:'/:id',
+        path:'/:lineid',
         middlewares:[requireAuth, requireManager],
         requiredPermissions:[PermissionEnum.OPERATE_LINES],
         controller:LineController.update,
@@ -55,20 +56,20 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'delete',
-        path:'/:id',
+        path:'/:lineid',
         middlewares:[requireAuth, requireManager],
         requiredPermissions:[PermissionEnum.OPERATE_LINES],
         controller:LineController.delete,
     },
     {
         method:'get',
-        path:'/:id/points',
+        path:'/:lineid/points',
         middlewares:[requireAuth, requireManager],
         controller:LineController.getPoints,
     },
     {
         method:'post',
-        path:'/:id/points',
+        path:'/:lineid/points',
         middlewares:[requireAuth, requireManager],
         requiredPermissions:[PermissionEnum.OPERATE_LINES],
         controller:LineController.createPoint,
@@ -103,7 +104,7 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'get',
-        path:'/:id/drivers',
+        path:'/:lineid/drivers',
         middlewares:[requireAuth, requireManager],
         queryParams:[
             {name:"withPending", type:"boolean"},
@@ -114,7 +115,7 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'get',
-        path:'/:id/pendingDrivers',
+        path:'/:lineid/pendingDrivers',
         queryParams:[
             {name:"name", type:"string"}
         ],
@@ -140,7 +141,7 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'get',
-        path:'/:id/passengers',
+        path:'/:lineid/passengers',
         queryParams:[
             {name:"withPending", type:"boolean"},
             {name:"status", type:"string"},
@@ -151,7 +152,7 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'get',
-        path:'/:id/pendingPassengers',
+        path:'/:lineid/pendingPassengers',
         queryParams:[
             {name:"name", type:"string"}
         ],
@@ -176,6 +177,36 @@ const routes: RouteDefinition[] = [
         middlewares:[requireAuth, requireManager],
         controller:LineController.deletePassenger,
     },
+    {
+        method:'post',
+        path:'/:lineid/passengers/:passengerid/document',
+        requiredPermissions:[PermissionEnum.OPERATE_DOCUMENTS],
+        middlewares:[requireAuth, requireManager, handleFileUpload],
+        controller:LineController.postPassengerDocument,
+        body:[
+            {name:"title", type:"string", required:true}
+        ]
+    },
+    {
+        method:'get',
+        path:'/:lineid/passengers/:passengerid/document/:documentid',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.getPassengerDocument,
+    },
+    {
+        method:'delete',
+        path:'/:lineid/passengers/:passengerid/document/:documentid',
+        middlewares:[requireAuth, requireManager],
+        requiredPermissions:[PermissionEnum.OPERATE_DOCUMENTS],
+        controller:LineController.deletePassengerDocument,
+    },
+    {
+        method:'get',
+        path:'/:lineid/passengers/:passengerid/documents/',
+        middlewares:[requireAuth, requireManager],
+        controller:LineController.getPassengerDocuments,
+    }
+
 ]
 
 export default routes;

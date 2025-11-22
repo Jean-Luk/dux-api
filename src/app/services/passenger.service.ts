@@ -3,6 +3,7 @@ import prisma from '../../config/prisma';
 import { AppError } from '../utils/AppError';
 import { StatusEnum } from '../../types/enums';
 import { RequestUser } from '../../types';
+import { supabase } from '../../config/supabase';
 
 interface CreateInterface {
     user: User;
@@ -39,6 +40,17 @@ interface GetLineInfoInterface {
 interface GetCardInfoInterface {
     lineId: string;
     user: RequestUser
+}
+interface GetPassengerLineDocumentsInterface {
+    lineId: string;
+    user: RequestUser;
+}
+interface GetPassengerDocumentsInterface {
+    user: RequestUser;
+}
+interface GetPassengerDocumentInterface {
+    documentId: number;
+    user: RequestUser;
 }
 export class PassengerService {
     static async create ({user, lineId}: CreateInterface, prismaClient : Prisma.TransactionClient = prisma): Promise<Manager> {
@@ -95,7 +107,6 @@ export class PassengerService {
 
     static async putCheckin ({checked, lineId, user}: CheckinInterface) {
         try {
-
             const passenger = await prisma.passenger.findUnique({
                 select:{
                     id:true,
@@ -117,7 +128,8 @@ export class PassengerService {
                     userId_lineId:{
                         userId:user.id,
                         lineId:lineId
-                    }
+                    },
+                    status:StatusEnum.ACTIVE
                 },
             });
 
@@ -182,7 +194,8 @@ export class PassengerService {
                     userId_lineId:{
                         userId:user.id,
                         lineId:lineId
-                    }
+                    },
+                    status:StatusEnum.ACTIVE
                 },
             });
 
@@ -199,7 +212,7 @@ export class PassengerService {
             
             const updatedCheckinPoints = await prisma.passenger.update({
                 where:{
-                    id:1
+                    id:passenger.id
                 },
                 data:dataToUpdate,
                 select:{boardingPointId:true, destinyPointId:true, dropoffPointId:true}
@@ -290,19 +303,29 @@ export class PassengerService {
                             }
                         }
                     },
-                    // Pontos de embarque/destino/desembarque do usuário
                     passengers:{
                         select:{
+                            // ID do passageiro e status da carteirinha
                             id:true,
                             cardStatus:true,
+                            // Pontos de embarque/destino/desembarque do usuário
                             boardingPointId:true,
                             destinyPointId:true,
-                            dropoffPointId:true
+                            dropoffPointId:true,
+                            // Documentos do usuário:
+                            documents:{
+                                select:{
+                                    documentTitle:true,
+                                    fileType:true,
+                                    id:true
+                                }
+                            }
                         },
                         where:{
-                            userId:user.id
+                            userId:user.id,
+                            status:StatusEnum.ACTIVE
                         }
-                    }
+                    },
                 },
                 where:{
                     passengers:{some:{userId:user.id, status:StatusEnum.ACTIVE}}, // Verificar se usuário é passageiro da linha
@@ -382,7 +405,8 @@ export class PassengerService {
                     userId_lineId:{
                         userId:user.id,
                         lineId
-                    }
+                    },
+                    status:StatusEnum.ACTIVE
                 },
             });
 
@@ -398,6 +422,92 @@ export class PassengerService {
             };
         } catch (error: any) {
             throw new AppError(error.message || 'Erro interno ao buscar informações da carteirinha do passageiro', error.statusCode || 500);
+        }
+    }
+
+    static async getPassengerLineDocuments({lineId, user}: GetPassengerLineDocumentsInterface) {
+        try {
+            const documents = await prisma.passengerDocument.findMany({
+                where:{
+                    passenger:{
+                        userId:user.id,
+                        lineId
+                    }
+                },
+                select:{
+                    documentTitle:true,
+                    fileType:true,
+                    id:true,
+                }
+            })
+
+            return documents;
+        } catch (error: any) {
+            throw new AppError(error.message || "Erro interno ao recuperar documentos da linha do passageiro" , error.statusCode || 500);
+        }
+    }
+
+    static async getPassengerDocuments({user}: GetPassengerDocumentsInterface) {
+        try {
+            const documents = await prisma.passengerDocument.findMany({
+                where:{
+                    passenger:{
+                        userId:user.id,
+                    }
+                },
+                select:{
+                    documentTitle:true,
+                    fileType:true,
+                    id:true,
+                }
+            })
+
+            return documents;
+
+        } catch (error: any) {
+            throw new AppError(error.message || "Erro interno ao recuperar documentos do passageiro", error.statusCode || 500);
+        }
+    }
+
+    static async getPassengerDocument({documentId, user}: GetPassengerDocumentInterface) {
+        try {
+
+            const document = await prisma.passengerDocument.findUnique({
+                where:{
+                    id:documentId,
+                    // Garantir que só possa visualizar os próprios documentos
+                    passenger:{
+                        userId:user.id
+                    }
+                },
+                select:{
+                    fileName:true,
+                    documentTitle:true,
+                    fileType:true,
+                    id:true
+                }
+            });
+
+            if (!document) {
+                throw new AppError("Documento inexistente", 400);
+            };
+
+            const { data, error } = await supabase.storage
+                .from("dux-passenger-documents")
+                .createSignedUrl(document.fileName, 60 * 2);
+
+            if (error) {
+                throw new AppError("Erro ao recuperar arquivo. Tente novamente mais tarde.");
+            }
+
+            return {
+                ...document,
+                url:data.signedUrl
+            }
+
+
+        } catch (error: any) {
+            throw new AppError(error.message || "Erro interno ao recuperar documento do passageiro", error.statusCode || 500);
         }
     }
 }
