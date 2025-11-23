@@ -73,4 +73,15 @@ export class ManagerController {
             next(err);
         }
     }
+    
+    static async getDashboard(req: Request, res: Response, next: NextFunction) {
+        try {
+
+            const result = await ManagerService.getDashboard({});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
 }

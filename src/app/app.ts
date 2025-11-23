@@ -5,6 +5,14 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { AppError } from './utils/AppError';
 
+declare global {
+    interface BigInt {
+        toJSON(): Number;
+    }
+}
+// Tratativa para converter BigInt's para JSON
+BigInt.prototype.toJSON = function () { return Number(this) }
+
 export const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [];
 export const isDev = process.env.ENVIRONMENT !== 'PROD';
 

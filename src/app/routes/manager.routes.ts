@@ -59,11 +59,17 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'get',
-        path:'/:id',
+        path:'/dashboard',
+        middlewares:[requireAuth, requireManager],
+        controller:ManagerController.getDashboard
+    },
+    {
+        method:'get',
+        path:'/:managerid',
         middlewares:[requireAuth, requireManager],
         requiredPermissions:[PermissionEnum.EDIT_MANAGERS],
         controller:ManagerController.getInfo
-    }
+    },
 ]
 
 export default routes;
