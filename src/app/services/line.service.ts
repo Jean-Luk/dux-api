@@ -92,6 +92,7 @@ interface DeleteDriverInterface {
 interface GetPassengersInterface {
     lineId: string;
     status?: string;
+    cardStatus?: string;
     name?: string;
     withPending?: boolean;
 }
@@ -602,7 +603,7 @@ export class LineService {
                 return {drivers, pendingDrivers}
             }
 
-            return drivers;
+            return {drivers};
         } catch (error: any) {
             throw new AppError(error.message || 'Erro interno ao listar motoristas', error.statusCode || 500);
         }
@@ -712,11 +713,14 @@ export class LineService {
         }
     }    
 
-    static async getPassengers ({lineId, name, status, withPending}: GetPassengersInterface) {
+    static async getPassengers ({lineId, name, status, cardStatus, withPending}: GetPassengersInterface) {
         try {
 
             if(status && !Helper.isValidStatus(status)) {
                 throw new AppError('Status especificado é inexistente', 400);
+            }
+            if(cardStatus && !Helper.isValidCardStatus(cardStatus)) {
+                throw new AppError('Status de carteirinha especificado é inexistente', 400);
             }
 
             const passengers = await prisma.passenger.findMany({
@@ -742,6 +746,7 @@ export class LineService {
                         ]}
                     ),
                     ...(status && {status}),
+                    ...(cardStatus && {cardStatus}),
                 },
                 orderBy:{user:{name:"asc"}},
             })
@@ -752,7 +757,7 @@ export class LineService {
                 return {passengers, pendingPassengers}
             }
 
-            return passengers;
+            return {passengers};
         } catch (error: any) {
             throw new AppError(error.message || 'Erro interno ao listar passageiros', error.statusCode || 500);
         }

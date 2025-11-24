@@ -1,4 +1,4 @@
-import { RoleEnum, StatusEnum } from "../../types/enums";
+import { CardStatusEnum, RoleEnum, StatusEnum } from "../../types/enums";
 
 export class Helper {
     static isValidCPF(cpf:string) : boolean {
@@ -60,6 +60,11 @@ export class Helper {
     static isValidStatus(status:string) : boolean {
         // Validar se a string equivale a "A", "U" ou "L"
         return Object.values(StatusEnum).includes(status as StatusEnum);
+    }
+
+    static isValidCardStatus(cardStatus:string) : boolean {
+        // Validar se a string equivale a "W", "R" ou "G"
+        return Object.values(CardStatusEnum).includes(cardStatus as CardStatusEnum);
     }
 
     static isValidTime(time:string) : boolean {

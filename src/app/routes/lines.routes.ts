@@ -108,7 +108,7 @@ const routes: RouteDefinition[] = [
         middlewares:[requireAuth, requireManager],
         queryParams:[
             {name:"withPending", type:"boolean"},
-            {name:"status", type:"string"},
+            {name:"status", type:"string", possibleValues:[StatusEnum.ACTIVE, StatusEnum.LEFT, StatusEnum.UNACTIVE, ""]},
             {name:"name", type:"string"}
         ],
         controller:LineController.getDrivers,
@@ -144,7 +144,8 @@ const routes: RouteDefinition[] = [
         path:'/:lineid/passengers',
         queryParams:[
             {name:"withPending", type:"boolean"},
-            {name:"status", type:"string"},
+            {name:"status", type:"string", possibleValues:[StatusEnum.ACTIVE, StatusEnum.LEFT, StatusEnum.UNACTIVE, ""]},
+            {name:"cardStatus", type:"string", possibleValues:[CardStatusEnum.GREEN, CardStatusEnum.RED, CardStatusEnum.WHITE, ""]},
             {name:"name", type:"string"}
         ],
         middlewares:[requireAuth, requireManager],
