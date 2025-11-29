@@ -52,6 +52,8 @@ const routes: RouteDefinition[] = [
             {name:"weekdays", type:"array", required:false, possibleValues:[0,1,2,3,4,5,6]},
             {name:"active", type:"boolean", required:false},
             {name:"billDueDate", type:"number", required:false},
+            {name:"supportPhone", required:false, type:"string"},
+            {name:"supportEmail", required:false, type:"string"},
         ]
     },
     {

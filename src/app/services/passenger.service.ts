@@ -240,6 +240,8 @@ export class PassengerService {
                     billDueDate:true,
                     departureTime:true,
                     name:true,
+                    supportEmail:true,
+                    supportPhone:true,
                     // Joins:
                     // Motoristas da linha:
                     drivers:{

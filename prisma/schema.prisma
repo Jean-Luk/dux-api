@@ -57,6 +57,8 @@ model Line {
   departureTime     DateTime?          @map("departure_time") @db.Time
   active            Boolean?           @default(true) @map("active")
   billDueDate       Int?               @map("bill_due_date") @db.SmallInt
+  supportEmail      String?            @map("support_email") @db.VarChar
+  supportPhone      String?            @map("support_phone") @db.Char(11)
   drivers           Driver[]
   invites           Invite[]
   lineWeekdays      LineWeekday[]

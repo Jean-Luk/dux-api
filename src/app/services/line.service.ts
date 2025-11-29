@@ -4,6 +4,7 @@ import { PointFlavorEnum, RoleEnum, StatusEnum, CardStatusEnum } from "../../typ
 import { AppError } from "../utils/AppError";
 import { Helper } from "../utils/Helper";
 import { supabase } from "../../config/supabase";
+import logger from "../../config/logger";
 
 interface ListInterface {
     page?: number;
@@ -31,7 +32,9 @@ interface UpdateInterface {
     departureTime?: string;
     weekdays?: (0|1|2|3|4|5|6)[];
     active?: boolean;
-    billDueDate?: number
+    billDueDate?: number;
+    supportPhone?: string;
+    supportEmail?: string
 }
 
 interface DeleteInterface {
@@ -228,7 +231,7 @@ export class LineService {
         }
     }
 
-    static async update ({lineId, name, departureTime, weekdays, active, billDueDate}:UpdateInterface) {
+    static async update ({lineId, name, departureTime, weekdays, active, billDueDate, supportEmail, supportPhone}:UpdateInterface) {
         try {
             // Trata o nome e verifica se é válido
             const sanitizedName = name?.trim()
@@ -243,6 +246,15 @@ export class LineService {
             if (billDueDate && (billDueDate < 1 || billDueDate > 28)) {
                 throw new AppError('Data de vencimento deve ser entre 1 e 28', 400);
             }
+            // Caso tenha sido especificado um e-mail para suporte, verifica se o mesmo é válido
+            if (supportEmail && !Helper.isValidEmail(supportEmail)) {
+                throw new AppError('E-mail de contato para suporte é inválido', 400);
+            }
+            // Caso tenha sido especificado um telefone para suporte, verifica se o mesmo é válido
+            if (supportPhone && !Helper.isValidPhone(supportPhone)) {
+                throw new AppError('Telefone de contato para suporte é inválido', 400);
+            }
+            const sanitizedSupportPhone = supportPhone ? Helper.sanitizePhone(supportPhone) : null;
 
             // Verifica quais campos serão atualizados e atribui seus valores
             const dataToUpdate: any = {};
@@ -258,6 +270,8 @@ export class LineService {
             }
             if (active !== undefined) dataToUpdate.active = active;
             if (billDueDate) dataToUpdate.billDueDate = billDueDate;
+            if (supportPhone !== null) dataToUpdate.supportPhone = sanitizedSupportPhone;
+            if (supportEmail !== null) dataToUpdate.supportEmail = supportEmail;
 
             // Atualiza a linha
             const updatedLine = await prisma.line.update({
@@ -965,6 +979,7 @@ export class LineService {
                 })
 
             if (error) {
+                logger.error(error)
                 throw new AppError("Erro ao fazer upload. Tente novamente mais tarde.");
             }
 
