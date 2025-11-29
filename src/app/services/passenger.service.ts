@@ -52,6 +52,10 @@ interface GetPassengerDocumentInterface {
     documentId: number;
     user: RequestUser;
 }
+interface GetLinePointsInterface {
+    lineId: string;
+    user: RequestUser;
+}
 export class PassengerService {
     static async create ({user, lineId}: CreateInterface, prismaClient : Prisma.TransactionClient = prisma): Promise<Manager> {
         try {
@@ -508,6 +512,46 @@ export class PassengerService {
 
         } catch (error: any) {
             throw new AppError(error.message || "Erro interno ao recuperar documento do passageiro", error.statusCode || 500);
+        }
+    }
+
+    static async getLinePoints({lineId, user}: GetLinePointsInterface) {
+        try {
+
+            const line = await prisma.line.findUnique({
+                where:{
+                    id:lineId,
+                    // Garantir que só possa visualizar pontos de linhas que participa
+                    passengers:{
+                        some:{
+                            userId:user.id
+                        }
+                    }
+                },
+                select:{
+                    points:{
+                        select:{
+                            id:true,
+                            lineId:true,
+                            address:true,
+                            sequencePosition:true,
+                            latitude:true,
+                            longitude:true,
+                            flavor:true
+                        }
+                    }
+                }
+            });
+
+            // Linha não existe ou usuário não participa dela
+            if (!line) {
+                throw new AppError("Linha inexistente", 400);
+            };
+
+            return { points:line.points }
+
+        } catch (error: any) {
+            throw new AppError(error.message || "Erro interno ao recuperar pontos da linha", error.statusCode || 500);
         }
     }
 }

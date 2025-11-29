@@ -93,4 +93,16 @@ export class PassengerController {
             next(err);
         }
     }
+
+    static async getLinePoints (req: Request, res: Response, next: NextFunction) {
+        try {
+            const lineId = req.params.lineid;
+
+            const result = await PassengerService.getLinePoints({lineId, user:req.user!});
+
+            res.status(200).json(result);
+        } catch (err) {
+            next(err);
+        }
+    }
 }

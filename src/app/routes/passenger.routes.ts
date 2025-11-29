@@ -81,6 +81,12 @@ const routes: RouteDefinition[] = [
         middlewares:[requireAuth, requirePassenger],
         controller:PassengerController.getPassengerDocument
     },
+    {
+        method:'get',
+        path:'/line/:lineid/points',
+        middlewares:[requireAuth, requirePassenger],
+        controller:PassengerController.getLinePoints
+    }
 ]
 
 export default routes;
