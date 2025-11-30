@@ -14,14 +14,14 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'delete',
-        path:'/:id',
+        path:'/:managerid',
         middlewares:[requireAuth, requireManager],
         requiredPermissions:[PermissionEnum.EDIT_MANAGERS],
         controller:ManagerController.delete
     },
     {
         method:'patch',
-        path:'/:id/permissions',
+        path:'/:managerid/permissions',
         middlewares:[requireAuth, requireManager],
         requiredPermissions:[PermissionEnum.EDIT_PERMISSIONS],
         controller:ManagerController.patchPermissions,
@@ -32,7 +32,7 @@ const routes: RouteDefinition[] = [
     },
     {
         method:'put',
-        path:'/:id/permissions',
+        path:'/:managerid/permissions',
         middlewares:[requireAuth, requireManager],
         requiredPermissions:[PermissionEnum.EDIT_PERMISSIONS],
         controller:ManagerController.putPermissions,

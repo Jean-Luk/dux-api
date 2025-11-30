@@ -338,7 +338,8 @@ export class ManagerService {
                     }
                 }
             })
-
+            console.log(managerId);
+            console.log(manager);
             if(!manager) {
                 throw new AppError("Gestor não encontrado", 404);
             }
