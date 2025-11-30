@@ -1,7 +1,7 @@
 import { Manager, Prisma, User } from '@prisma/client';
 import prisma from '../../config/prisma';
 import { AppError } from '../utils/AppError';
-import { StatusEnum } from '../../types/enums';
+import { CardStatusEnum, StatusEnum } from '../../types/enums';
 import { RequestUser } from '../../types';
 import { supabase } from '../../config/supabase';
 
@@ -64,7 +64,8 @@ export class PassengerService {
                 data:{
                     userId:user.id,
                     lineId,
-                    status:StatusEnum.ACTIVE
+                    status:StatusEnum.ACTIVE,
+                    cardStatus:CardStatusEnum.WHITE
                 }
             })
 
