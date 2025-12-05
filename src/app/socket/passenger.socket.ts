@@ -14,14 +14,14 @@ export default function setupPassengerEvents (socket: Socket) {
             if (!driverId || typeof driverId !== "number") {
                 throw new SocketError("ID de motorista inválido")
             }
-    
+            console.log(driverId)
             const driver = await LineService.getDriverIfPassengerAuthorized({lineId, driverId, passengerUserId:userId})
     
             // Linha ou motorista não existem, ou passageiro não está autorizado
             if (!driver) {
                 throw new SocketError("Linha ou motorista inexistentes")
             }
-
+            console.log(driver);
             // Verifica se o motorista está compartilhando localização
             if (!driver.sharingLocation) {
                 throw new SocketError("Este motorista não está mais compartilhando localização")

@@ -83,6 +83,7 @@ export default function setupDriverEvents (socket: Socket) {
     const userId = socket.data.userId;
 
     socket.on("startSharingLocation", async (lineId: unknown) => {
+        logger.info(`[Socket][Evento] startSharingLocation - Usuario: ${userId} | Linha: ${lineId}`)
         try {
             // Verifica se o parâmetro foi passado corretamente
             if (typeof lineId !== "string") {
@@ -101,6 +102,8 @@ export default function setupDriverEvents (socket: Socket) {
     })
 
     socket.on("updateDriverLocation", (latitude, longitude) => {
+        logger.info(`[Socket][Evento] updateDriverLocation - Usuario: ${userId} | Latitude: ${latitude} | Longitude: ${longitude}`)
+
         try {
             // Valida se as coordenadas passadas são válidas
             if(!Helper.isValidCoordinates(latitude, longitude)) {
@@ -119,6 +122,7 @@ export default function setupDriverEvents (socket: Socket) {
             driver.longitude = longitude;
             driver.timestamp = Date.now();
 
+            logger.info(`[Socket][Detalhes] updateDriverLocation - Linhas: ${driver.lines.join(', ')}`)
             // Percorre a lista de linhas que o motorista está compartilhando a localização
             for (const lineId of driver.lines) {
                 // Emite para os passageiros que estejam "assistindo" a localização
@@ -131,7 +135,7 @@ export default function setupDriverEvents (socket: Socket) {
     })
 
     socket.on("disconnect", async () => {
-        logger.info(`[Socket] Desconectou: ${socket.id}`)
+        logger.info(`[Socket] Desconectou Motorista: ${socket.data.id}`)
         try {
             const userId = socket.data.userId;
             const driverLines = getDriverLines(userId)
@@ -142,10 +146,6 @@ export default function setupDriverEvents (socket: Socket) {
         } catch (error) {
             socket.emit("error", "Erro interno ao parar compartilhamento")
         }
-    })
-
-    socket.on("connect", async () => {
-
     })
 
     socket.on("stopSharingLocation",  (lineId?: unknown|undefined) => {

@@ -99,7 +99,7 @@ export class Helper {
         }
 
         // Cria um timestamp UTC usando Date.UTC (ano, mês, dia, hora, minuto, segundo)
-        return new Date(1970, 0, 1, hours, minutes, seconds);
+        return new Date(Date.UTC(1970, 0, 1, hours, minutes, seconds));
     }
 
     static isValidLatitude(lat: number): boolean {

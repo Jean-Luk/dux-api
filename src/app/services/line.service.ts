@@ -937,6 +937,9 @@ export class LineService {
                         select:{
                             userId:true,
                             sharingLocation:true
+                        },
+                        where:{
+                            id:driverId
                         }
                     }
                 }

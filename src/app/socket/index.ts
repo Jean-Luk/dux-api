@@ -60,6 +60,9 @@ export function initSocket (server: any) {
         setupDriverEvents(socket);
         setupPassengerEvents(socket);
         
+        socket.on('disconnect', (reason) => {
+            logger.info(`[Socket] Desconetou - Motivo: ${reason} | Usuario: ${socket.data.userId}`)
+        })
     })
 }
 
